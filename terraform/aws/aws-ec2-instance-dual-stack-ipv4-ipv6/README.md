@@ -2,7 +2,7 @@
 
 This example creates the following:
 
-- a **dual-stack IPv4/IPv6_** VPC with related resources including a NAT Gateway
+- a **dual-stack IPv4/IPv6** VPC with related resources including a NAT Gateway
 - an EC2 instance running Tailscale in a public subnet
 - a Tailnet device key to authenticate the Tailscale device
 
