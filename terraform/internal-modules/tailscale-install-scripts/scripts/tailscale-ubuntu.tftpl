@@ -1,0 +1,31 @@
+#!/bin/bash
+#
+# Installs tailscale, runs `tailscale up`, and runs additional scripts if provided
+#
+
+exec &>> /root/tailscale-cloud-init-user-data.log
+
+%{ for s in before_scripts }
+${s}
+%{ endfor }
+
+echo -e '\n#\n# Beginning Tailscale installation...\n#\n'
+
+# https://tailscale.com/kb/1187/install-ubuntu-2204/
+curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/jammy.noarmor.gpg | sudo tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null
+curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/jammy.tailscale-keyring.list | sudo tee /etc/apt/sources.list.d/tailscale.list
+
+apt-get -qq update
+apt-get install -yqq tailscale
+
+tailscale up ${join(" ", tailscale_arguments)}
+
+%{ for s in tailscale_set_preferences }
+tailscale set ${s}
+%{ endfor }
+
+echo -e '\n#\n# Complete.\n#\n'
+
+%{ for s in after_scripts }
+${s}
+%{ endfor }

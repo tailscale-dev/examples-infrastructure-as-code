@@ -1,0 +1,24 @@
+#!/bin/bash
+#
+# Tailscale version 1.54 or later used with a Linux 6.2 or later kernel enables UDP throughput improvements via transport layer offloads.
+# https://tailscale.com/s/ethtool-config-udp-gro
+#
+
+echo -e '\n#\n# Beginning ethtool udp optimization configuration...\n#\n'
+
+NETDEV=$(ip route show 0/0 | cut -f5 -d' ')
+
+for d in $NETDEV; do
+    ethtool -K $d rx-udp-gro-forwarding on rx-gro-list off
+    if [ "$?" -ne "0" ]; then
+        echo -e '\n#\n# ERROR: ethtool udp optimization failed.\n#\n'
+        exit 1
+    fi
+done
+
+for d in $NETDEV; do
+    printf '#!/bin/bash\n\nethtool -K %s rx-udp-gro-forwarding on rx-gro-list off \n' $d | sudo tee /etc/networkd-dispatcher/routable.d/50-tailscale-$d
+    chmod 755 /etc/networkd-dispatcher/routable.d/50-tailscale-$d
+done
+
+echo -e '\n#\n# Complete.\n#\n'

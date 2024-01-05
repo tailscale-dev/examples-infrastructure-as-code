@@ -1,0 +1,31 @@
+#!/bin/bash
+#
+# Download and parse a json file from the vendor to create a list of routes to advertise 
+# by Tailscale. The list is saved appended to a file that may have other routes already added.
+# 
+# https://docs.aws.amazon.com/vpc/latest/userguide/aws-ip-ranges.html
+#
+
+echo -e '\n#\n# Beginning AWS routes fetching, parsing, and saving to [${routes_file_to_append}]...\n#\n'
+
+which jq > /dev/null # TODO: move to shared script?
+if [ $? -ne 0 ]; then
+    apt-get -qq update
+    apt-get -yqq install jq
+    echo -e '\n#\n# jq installation complete.\n#\n'
+fi
+
+OUTPUT_FILE_TMP=/tmp/routes-output-aws.txt
+OUTPUT_FILE=${routes_file_to_append}
+
+JSON_FILE=routes-input-aws.json
+curl -s 'https://ip-ranges.amazonaws.com/ip-ranges.json' > $JSON_FILE
+
+%{ for s in tailscale_advertise_aws_service_names ~}
+jq -r '.prefixes[] | select(.service == "${s}").ip_prefix' $JSON_FILE >> $OUTPUT_FILE_TMP
+jq -r '.ipv6_prefixes[] | select(.service == "${s}").ipv6_prefix' $JSON_FILE >> $OUTPUT_FILE_TMP
+%{ endfor ~}
+
+cat $OUTPUT_FILE_TMP | sort | uniq > $OUTPUT_FILE
+
+echo -e '\n#\n# Complete.\n#\n'

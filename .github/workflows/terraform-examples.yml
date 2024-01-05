@@ -1,0 +1,40 @@
+name: Check Terraform examples
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, closed]
+    paths:
+      - ".github/workflows/**"
+      - "terraform/**"
+
+jobs:
+
+  check-terraform-fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Check Terraform formatting
+        run: |
+          bash terraform/internal-scripts/check-terraform-fmt.sh terraform
+
+  check-variables-tailscale-install-scripts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      # - name: tree
+      #   working-directory: terraform
+      #   run: |
+      #     apt-get -y update
+      #     apt-get -y install tree
+      #     tree -a
+
+      - name: Check variables-tailscale-install-scripts.tf files
+        run: |
+          bash terraform/internal-scripts/check-variables-tailscale-install-scripts.sh terraform

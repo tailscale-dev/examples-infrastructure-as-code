@@ -1,0 +1,32 @@
+#!/bin/bash
+#
+# Advertise routes with `tailscale set --advertise-routes...` so we can merge routes provided 
+# directly to the user data script (likely VPC or Subnet CIDRs) and routes provided by a file on 
+# the host (likely a long list of routes for a SaaS provider).
+#
+
+echo -e '\n#\n# Beginning `tailscale set --advertise-routes...` configuration...\n#\n'
+
+%{ if tailscale_advertise_routes_from_file_on_host != "" ~}
+ROUTES_FROM_FILE=$(cat ${tailscale_advertise_routes_from_file_on_host} | tr '\n' ',' | sed 's/[,]$//')
+%{ else ~}
+# No `tailscale_advertise_routes_from_file_on_host` provided during Terraform run.
+%{ endif ~}
+
+%{ if tailscale_advertise_routes != "" ~}
+ROUTES=${tailscale_advertise_routes}
+%{ else ~}
+# No `tailscale_advertise_routes` provided during Terraform run.
+%{ endif ~}
+
+if [ "$ROUTES" != "" ] && [ "$ROUTES_FROM_FILE" != "" ]; then
+    ROUTES="$ROUTES,$ROUTES_FROM_FILE"
+elif [ "$ROUTES_FROM_FILE" != "" ]; then
+    ROUTES="$ROUTES_FROM_FILE"
+elif [ "$ROUTES" != "" ]; then
+    ROUTES="$ROUTES"
+fi
+
+tailscale set --advertise-routes=$ROUTES
+
+echo -e '\n#\n# Complete.\n#\n'
