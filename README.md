@@ -20,6 +20,6 @@ This repository _does not_ contain examples for every IaC tool, infrastructure p
 
 To contribute:
 
-- **An example** - please [open an issue](./issues) describing your proposed example before spending your time and resources developing the example and submitting a pull request. Contributions for unique or less common deployments may not be accepted.
-- **A bug fix** - please [open an issue](./issues) describing the bug if one does not already exist and feel free to submit a pull request with a fix.
-- **Something else** - please [open an issue](./issues) describing your contribution before spending your time and resources developing it.
+- **An example** - please [open an issue](https://github.com/tailscale-dev/examples-infrastructure-as-code/issues) describing your proposed example before spending your time and resources developing the example and submitting a pull request. Contributions for unique or less common deployments may not be accepted.
+- **A bug fix** - please [open an issue](https://github.com/tailscale-dev/examples-infrastructure-as-code/issues) describing the bug if one does not already exist and feel free to submit a pull request with a fix.
+- **Something else** - please [open an issue](https://github.com/tailscale-dev/examples-infrastructure-as-code/issues) describing your contribution before spending your time and resources developing it.
