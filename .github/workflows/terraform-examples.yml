@@ -22,7 +22,7 @@ jobs:
         run: |
           bash terraform/internal-scripts/check-terraform-fmt.sh terraform
 
-  check-variables-tailscale-install-scripts:
+  check-terraform-variables-tailscale-install-scripts:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
