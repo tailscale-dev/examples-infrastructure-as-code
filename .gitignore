@@ -1,0 +1,15 @@
+# Terraform-related files
+*.tfstate
+*.tfstate.*
+*.tfstate.lock.info
+**/.terraform.lock.hcl
+**/.terraform
+**/terraform.tfstate
+**/terraform.tfstate.backup
+
+# Terraform Variables
+*.tfvars
+
+# Keys
+*.pem
+*.key
