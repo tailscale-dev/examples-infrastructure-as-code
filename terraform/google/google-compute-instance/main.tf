@@ -1,10 +1,11 @@
 locals {
-  name = "example-${basename(path.cwd)}"
+  name = var.name != "" ? var.name : "example-${basename(path.cwd)}"
 
-  metadata = {
+  tags = var.tags != "" ? var.tags : ["example"]
+
+  metadata = var.metadata != "" ? var.metadata : {
     Name = local.name
   }
-  tags = ["example"]
 }
 
 module "vpc" {
@@ -34,12 +35,7 @@ resource "tailscale_tailnet_key" "main" {
   preauthorized       = true
   reusable            = true
   recreate_if_invalid = "always"
-  tags = [
-    "tag:example-infra",
-    "tag:example-exitnode",
-    "tag:example-subnetrouter",
-    "tag:example-appconnector",
-  ]
+  tags                = var.tailscale_device_tags
 }
 
 module "tailscale_instance" {
@@ -47,7 +43,7 @@ module "tailscale_instance" {
 
   zone         = var.zone
   machine_name = local.name
-  machine_type = "e2-medium"
+  machine_type = var.machine_type
   subnet       = module.vpc.subnets_ids[0]
 
   instance_metadata = local.metadata

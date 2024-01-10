@@ -1,7 +1,7 @@
 locals {
-  name = "example-${basename(path.cwd)}"
+  name = var.name != "" ? var.name : "example-${basename(path.cwd)}"
 
-  tags = {
+  tags = var.tags != "" ? var.tags : {
     Name = local.name
   }
 }
@@ -39,12 +39,7 @@ resource "tailscale_tailnet_key" "main" {
   preauthorized       = true
   reusable            = true
   recreate_if_invalid = "always"
-  tags = [
-    "tag:example-infra",
-    "tag:example-exitnode",
-    "tag:example-subnetrouter",
-    "tag:example-appconnector",
-  ]
+  tags                = var.tailscale_device_tags
 }
 
 module "tailscale_azure_linux_virtual_machine" {
@@ -57,7 +52,7 @@ module "tailscale_azure_linux_virtual_machine" {
   primary_subnet_id = module.network.public_subnet_id
 
   machine_name          = local.name
-  machine_size          = "Standard_DS1_v2"
+  machine_size          = var.machine_size
   admin_public_key_path = var.admin_public_key_path
   resource_tags         = local.tags
 
