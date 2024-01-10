@@ -1,9 +1,9 @@
 locals {
   name = var.name != "" ? var.name : "example-${basename(path.cwd)}"
 
-  tags = var.tags != "" ? var.tags : ["example"]
+  tags = length(var.tags) > 0 ? var.tags : ["example"]
 
-  metadata = var.metadata != "" ? var.metadata : {
+  metadata = length(var.metadata) > 0 ? var.metadata : {
     Name = local.name
   }
 }
