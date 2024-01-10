@@ -25,12 +25,7 @@ resource "tailscale_tailnet_key" "main" {
   preauthorized       = true
   reusable            = true
   recreate_if_invalid = "always"
-  tags = [
-    "tag:example-infra",
-    "tag:example-exitnode",
-    "tag:example-subnetrouter",
-    "tag:example-appconnector",
-  ]
+  tags                = var.tailscale_device_tags
 }
 
 module "tailscale_aws_ec2" {
@@ -42,7 +37,7 @@ module "tailscale_aws_ec2" {
     module.vpc.tailscale_security_group_id,
   ]
 
-  instance_type = "t4g.micro"
+  instance_type = var.instance_type
   instance_tags = local.tags
 
   # Variables for Tailscale resources

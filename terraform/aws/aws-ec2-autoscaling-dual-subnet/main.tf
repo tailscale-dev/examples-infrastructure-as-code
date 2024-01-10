@@ -23,12 +23,7 @@ resource "tailscale_tailnet_key" "main" {
   preauthorized       = true
   reusable            = true
   recreate_if_invalid = "always"
-  tags = [
-    "tag:example-infra",
-    "tag:example-exitnode",
-    "tag:example-subnetrouter",
-    "tag:example-appconnector",
-  ]
+  tags                = var.tailscale_device_tags
 }
 
 resource "aws_network_interface" "primary" {
@@ -56,7 +51,7 @@ module "tailscale_aws_ec2_autoscaling" {
   source = "../internal-modules/aws-ec2-autoscaling/"
 
   autoscaling_group_name = local.name
-  instance_type          = "t4g.micro"
+  instance_type          = var.instance_type
   instance_tags          = local.tags
 
   network_interfaces = [
