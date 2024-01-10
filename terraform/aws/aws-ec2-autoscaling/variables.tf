@@ -1,4 +1,18 @@
 #
+# Variables for all resources
+#
+variable "name" {
+  description = "Name for all resources"
+  type        = string
+  default     = ""
+}
+variable "tags" {
+  description = "Map of tags to add to all resources"
+  type        = map(string)
+  default     = {}
+}
+
+#
 # Variables for Tailscale
 #
 variable "tailscale_device_tags" {

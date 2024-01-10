@@ -1,7 +1,7 @@
 locals {
-  name = "example-${basename(path.cwd)}"
+  name = var.name != "" ? var.name : "example-${basename(path.cwd)}"
 
-  tags = {
+  tags = var.tags != "" ? var.tags : {
     Name = local.name
   }
 }
