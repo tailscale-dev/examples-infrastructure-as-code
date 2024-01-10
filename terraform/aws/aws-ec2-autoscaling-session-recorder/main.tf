@@ -108,9 +108,7 @@ resource "tailscale_tailnet_key" "recorder" {
   preauthorized       = true
   reusable            = true
   recreate_if_invalid = "always"
-  tags = [
-    "tag:example-sessionrecorder",
-  ]
+  tags                = var.tailscale_device_tags_recorder
 }
 
 resource "tailscale_tailnet_key" "main" {
@@ -118,9 +116,7 @@ resource "tailscale_tailnet_key" "main" {
   preauthorized       = true
   reusable            = true
   recreate_if_invalid = "always"
-  tags = [
-    "tag:example-infra",
-  ]
+  tags                = var.tailscale_device_tags
 }
 
 resource "aws_network_interface" "primary" {
@@ -143,7 +139,7 @@ module "tailscale_aws_ec2_autoscaling" {
 
   network_interfaces = [aws_network_interface.primary.id]
 
-  instance_type = "t4g.micro"
+  instance_type = var.instance_type
   instance_tags = local.tags
 
   # Variables for Tailscale resources

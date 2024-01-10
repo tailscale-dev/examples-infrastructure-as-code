@@ -1,6 +1,16 @@
 #
 # Variables for Tailscale
 #
+variable "tailscale_device_tags" {
+  description = "Tailscale device tags to assign"
+  type        = set(string)
+  default = [
+    "tag:example-infra",
+    "tag:example-exitnode",
+    "tag:example-subnetrouter",
+    "tag:example-appconnector",
+  ]
+}
 variable "tailscale_set_preferences" {
   description = "Preferences to set via `tailscale set ...` - e.g. `--auto-update`. (Do not include `tailscale set`.)"
   type        = set(string)
@@ -25,4 +35,8 @@ variable "public_subnets" {
 variable "private_subnets" {
   type    = list(string)
   default = ["10.0.81.0/24"]
+}
+variable "instance_type" {
+  type    = string
+  default = "t4g.micro"
 }
