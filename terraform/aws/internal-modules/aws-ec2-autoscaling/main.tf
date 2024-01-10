@@ -91,14 +91,21 @@ resource "aws_autoscaling_group" "tailscale" {
     version = aws_launch_template.tailscale.latest_version
   }
 
-  max_size         = 1
-  min_size         = 1
+  availability_zones = [data.aws_network_interface.selected[0].availability_zone]
+
   desired_capacity = 1
+  min_size         = 1
+  max_size         = 2
+
+  instance_refresh {
+    strategy = "Rolling"
+    preferences {
+      min_healthy_percentage = 50
+    }
+  }
 
   health_check_grace_period = 300
   health_check_type         = "EC2"
-
-  availability_zones = [data.aws_network_interface.selected[0].availability_zone]
 
   timeouts {
     delete = "15m"
