@@ -22,7 +22,7 @@ JSON_FILE=routes-input-github.json
 curl -s 'https://api.github.com/meta' > $JSON_FILE
 
 %{ for s in tailscale_advertise_github_service_names ~}
-jq -r '.${s}' $JSON_FILE >> $OUTPUT_FILE_TMP
+jq -r '.${s}[]' $JSON_FILE >> $OUTPUT_FILE_TMP
 %{ endfor ~}
 
 cat $OUTPUT_FILE_TMP | sort | uniq > $OUTPUT_FILE
