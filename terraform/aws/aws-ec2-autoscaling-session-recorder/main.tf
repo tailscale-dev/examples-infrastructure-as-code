@@ -35,6 +35,14 @@ resource "aws_s3_bucket" "recorder" {
   force_destroy = true
 }
 
+resource "aws_s3_bucket_ownership_controls" "recorder" {
+  bucket = aws_s3_bucket.recorder.id
+
+  rule {
+    object_ownership = "BucketOwnerEnforced"
+  }
+}
+
 resource "aws_s3_bucket_policy" "recorder" {
   bucket = aws_s3_bucket.recorder.id
   policy = <<-EOT
