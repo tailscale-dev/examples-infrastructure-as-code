@@ -55,6 +55,10 @@ resource "aws_launch_template" "tailscale" {
   instance_type = var.instance_type
   key_name      = var.instance_key_name
 
+  iam_instance_profile {
+    name = var.instance_profile_name
+  }
+
   metadata_options {
     http_endpoint = var.instance_metadata_options["http_endpoint"]
     http_tokens   = var.instance_metadata_options["http_tokens"]

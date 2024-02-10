@@ -46,6 +46,8 @@ resource "aws_instance" "tailscale_instance" {
   vpc_security_group_ids = var.vpc_security_group_ids
   source_dest_check      = !module.tailscale_install_scripts.ip_forwarding_required
 
+  iam_instance_profile = var.instance_profile_name
+
   metadata_options {
     http_endpoint = var.instance_metadata_options["http_endpoint"]
     http_tokens   = var.instance_metadata_options["http_tokens"]
