@@ -18,6 +18,10 @@ variable "instance_key_name" {
   type    = string
   default = ""
 }
+variable "instance_profile_name" {
+  type    = string
+  default = null
+}
 variable "instance_metadata_options" {
   type = map(string)
   # IMDSv2 - not required, but recommended
