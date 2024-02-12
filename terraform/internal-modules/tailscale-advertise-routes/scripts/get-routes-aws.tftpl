@@ -26,6 +26,6 @@ jq -r '.prefixes[] | select(.service == "${s}").ip_prefix' $JSON_FILE >> $OUTPUT
 jq -r '.ipv6_prefixes[] | select(.service == "${s}").ipv6_prefix' $JSON_FILE >> $OUTPUT_FILE_TMP
 %{ endfor ~}
 
-cat $OUTPUT_FILE_TMP | sort | uniq > $OUTPUT_FILE
+cat $OUTPUT_FILE_TMP | sort | uniq >> $OUTPUT_FILE # append to file to not overwrite routes from other sources
 
 echo -e '\n#\n# Complete.\n#\n'
