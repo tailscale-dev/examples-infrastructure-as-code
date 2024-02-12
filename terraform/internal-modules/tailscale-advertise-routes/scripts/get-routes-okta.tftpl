@@ -25,6 +25,6 @@ curl -s 'https://s3.amazonaws.com/okta-ip-ranges/ip_ranges.json' > $JSON_FILE
 jq -r '.${s}.ip_ranges[]' $JSON_FILE >> $OUTPUT_FILE_TMP
 %{ endfor ~}
 
-cat $OUTPUT_FILE_TMP | sort | uniq > $OUTPUT_FILE
+cat $OUTPUT_FILE_TMP | sort | uniq >> $OUTPUT_FILE # append to file to not overwrite routes from other sources
 
 echo -e '\n#\n# Complete.\n#\n'
