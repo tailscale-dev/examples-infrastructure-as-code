@@ -20,8 +20,6 @@ variable "tailscale_device_tags" {
   type        = set(string)
   default = [
     "tag:example-infra",
-    "tag:example-exitnode",
-    "tag:example-subnetrouter",
     "tag:example-appconnector",
   ]
 }

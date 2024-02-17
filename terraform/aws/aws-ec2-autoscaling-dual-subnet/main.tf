@@ -64,13 +64,25 @@ module "tailscale_aws_ec2_autoscaling" {
   tailscale_auth_key            = tailscale_tailnet_key.main.key
   tailscale_set_preferences     = var.tailscale_set_preferences
   tailscale_ssh                 = true
-  tailscale_advertise_exit_node = true
+  tailscale_advertise_exit_node = false
 
-  tailscale_advertise_routes = [
-    module.vpc.vpc_cidr_block,
-  ]
+  # tailscale_advertise_routes = [
+  #   module.vpc.vpc_cidr_block,
+  # ]
 
   tailscale_advertise_connector = true
+  # tailscale_advertise_aws_service_names = [
+  #   "EC2",
+  # ]
+
+  instance_profile_name = aws_iam_instance_profile.routes.name
+  additional_after_scripts = [
+    local.routes_persistence_script,
+  ]
+
+  # tailscale_advertise_okta_cell_names = [
+  #   "emea_cell_2",
+  # ]
   # tailscale_advertise_github_service_names = [
   #   "api",
   #   "packages",
