@@ -66,9 +66,9 @@ module "tailscale_aws_ec2_autoscaling" {
   tailscale_ssh                 = true
   tailscale_advertise_exit_node = false
 
-  # tailscale_advertise_routes = [
-  #   module.vpc.vpc_cidr_block,
-  # ]
+  tailscale_advertise_routes = [
+    module.vpc.vpc_cidr_block,
+  ]
 
   tailscale_advertise_connector = true
   # tailscale_advertise_aws_service_names = [
@@ -77,7 +77,8 @@ module "tailscale_aws_ec2_autoscaling" {
 
   instance_profile_name = aws_iam_instance_profile.routes.name
   additional_after_scripts = [
-    local.routes_persistence_script,
+    local.script_routes_restore,
+    local.script_routes_persist,
   ]
 
   # tailscale_advertise_okta_cell_names = [
