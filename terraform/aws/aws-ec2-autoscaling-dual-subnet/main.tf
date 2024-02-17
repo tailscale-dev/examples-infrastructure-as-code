@@ -79,7 +79,6 @@ module "tailscale_aws_ec2_autoscaling" {
   additional_after_scripts = [
     local.script_routes_restore,
     local.script_routes_persist,
-    local.script_shutdown,
   ]
 
   # tailscale_advertise_okta_cell_names = [
@@ -94,19 +93,4 @@ module "tailscale_aws_ec2_autoscaling" {
   depends_on = [
     module.vpc.natgw_ids, # ensure NAT gateway is available before instance provisioning - primarily for private subnets
   ]
-}
-
-locals {
-  script_shutdown = <<-EOT
-    #!/bin/bash
-
-    OVERRIDE_PATH=/etc/systemd/system/tailscaled.service.d/
-    mkdir $OVERRIDE_PATH
-    cat << EOF > $OVERRIDE_PATH/local.conf
-    [Service]
-    ExecStop=/usr/bin/tailscale down
-    EOF
-
-    systemctl daemon-reload
-  EOT
 }
