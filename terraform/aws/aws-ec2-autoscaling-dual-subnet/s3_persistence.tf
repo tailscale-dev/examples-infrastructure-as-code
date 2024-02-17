@@ -45,7 +45,7 @@ locals {
 
     sh ./$SCRIPT_PATH
 
-    EOT
+  EOT
 
   script_routes_persist = <<-EOT
     #!/bin/bash
@@ -78,9 +78,9 @@ locals {
 
     chmod +x $SCRIPT_PATH
 
-    crontab<<EOF
+    crontab << EOF
     */1 * * * * $SCRIPT_PATH >> /root/$(basename $SCRIPT_PATH).log
     EOF
 
-    EOT
+  EOT
 }
