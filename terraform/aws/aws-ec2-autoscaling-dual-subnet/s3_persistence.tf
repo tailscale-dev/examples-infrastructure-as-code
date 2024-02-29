@@ -13,7 +13,7 @@ locals {
     apt-get -yqq install awscli
 
     SCRIPT_PATH=/root/tailscale-appconnector-routes-restore.sh
-    ROUTES_TO_RESTORE_DIR=/root/tailscale-appconnector-routes-to-restore-${local.app_name}/
+    ROUTES_TO_RESTORE_DIR=/root/tailscale-appconnector-${local.app_name}-routes-to-restore/
     mkdir -p $ROUTES_TO_RESTORE_DIR
 
     # save to a file so we can re-run in the future if neeeded
@@ -27,6 +27,7 @@ locals {
     AWS_TOKEN=\`curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"\`
     AWS_ZONE_ID=\`curl -s -H "X-aws-ec2-metadata-token: \$AWS_TOKEN" http://169.254.169.254/latest/meta-data/placement/availability-zone-id\`
     AWS_REGION=\`echo \$AWS_ZONE_ID | cut -d'-' -f1\`
+
     S3_OBJECT_FULLPATH=${local.routes_file_s3_basepath}/${local.routes_file_s3_instance_prefix}/\$AWS_REGION/
 
     # skip the first two lines which are the device's own tailscale addresses
@@ -60,24 +61,33 @@ locals {
     apt-get -yqq install awscli
 
     SCRIPT_PATH=/root/tailscale-appconnector-routes-persist.sh
+    ROUTES_TO_PERSIST_DIR=/root/tailscale-appconnector-${local.app_name}-routes-to-persist/
+    mkdir -p $ROUTES_TO_PERSIST_DIR
 
+    # save to a file so we can re-run in the future if neeeded, and schedule via cron
     cat << EOF > $SCRIPT_PATH
     #!/bin/bash
+
+    CURRENT_TIME=\`date -u +"%Y-%m-%dT%H:%M:%SZ"\`
+    ROUTES_TO_PERSIST_DIR=$ROUTES_TO_PERSIST_DIR\$CURRENT_TIME/
+    mkdir -p \$ROUTES_TO_PERSIST_DIR
 
     AWS_TOKEN=\`curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"\`
     AWS_ZONE_ID=\`curl -s -H "X-aws-ec2-metadata-token: \$AWS_TOKEN" http://169.254.169.254/latest/meta-data/placement/availability-zone-id\`
     AWS_REGION=\`echo \$AWS_ZONE_ID | cut -d'-' -f1\`
     AWS_AMI_LAUNCH_INDEX=\`curl -s -H "X-aws-ec2-metadata-token: \$AWS_TOKEN" http://169.254.169.254/latest/meta-data/ami-launch-index\`
+    
+    LOCAL_FILE_FULLPATH=\$ROUTES_TO_PERSIST_DIR/routes.tmp
     S3_OBJECT_FULLPATH=${local.routes_file_s3_basepath}/${local.routes_file_s3_instance_prefix}/\$AWS_REGION/\$AWS_ZONE_ID-ami-launch-index-\$AWS_AMI_LAUNCH_INDEX.txt
 
-    tailscale status --json | jq -r .Self.AllowedIPs[] | tail -n +3 > routes.tmp
-    ROUTES_COUNT=\$(cat routes.tmp | wc -l)
+    tailscale status --json | jq -r .Self.AllowedIPs[] | tail -n +3 > \$LOCAL_FILE_FULLPATH
+    ROUTES_COUNT=\$(cat \$LOCAL_FILE_FULLPATH | wc -l)
 
-    echo \`date -u +"%Y-%m-%dT%H:%M:%SZ"\`": saving [\$ROUTES_COUNT] routes to \$S3_OBJECT_FULLPATH"
+    echo \$CURRENT_TIME": saving [\$ROUTES_COUNT] routes to \$S3_OBJECT_FULLPATH"
 
     # skip the first two lines which are the device's own tailscale addresses
     aws s3 cp \
-      routes.tmp \
+      \$LOCAL_FILE_FULLPATH \
       \$S3_OBJECT_FULLPATH
 
     EOF
