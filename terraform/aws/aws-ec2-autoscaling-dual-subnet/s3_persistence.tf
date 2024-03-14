@@ -38,8 +38,8 @@ locals {
       \$S3_OBJECT_FULLPATH \
       \$ROUTES_TO_RESTORE_DIR
 
-    ROUTES=\$(cat \$ROUTES_TO_RESTORE_DIR/* | tr '\n' ',' | sed 's/[,]$//')
-    ROUTES_COUNT=\$(cat \$ROUTES_TO_RESTORE_DIR/* | wc -l)
+    ROUTES=\$(cat \$ROUTES_TO_RESTORE_DIR/* | sort -u | tr '\n' ',' | sed 's/[,]$//') # TODO: strip empty lines
+    ROUTES_COUNT=\$(cat \$ROUTES_TO_RESTORE_DIR/* | sort -u | wc -l)
     echo \`date -u +"%Y-%m-%dT%H:%M:%SZ"\`": restoring [\$ROUTES_COUNT] routes from \$S3_OBJECT_FULLPATH"
     tailscale set --advertise-routes=\$ROUTES
 
