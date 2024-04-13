@@ -62,3 +62,13 @@ resource "aws_security_group_rule" "internal_vpc_ingress_ipv6" {
   protocol          = "-1"
   ipv6_cidr_blocks  = [module.vpc.vpc_ipv6_cidr_block]
 }
+
+resource "aws_security_group_rule" "tailscale_ingress" {
+  security_group_id = aws_security_group.tailscale.id
+  type              = "ingress"
+  from_port         = 41641
+  to_port           = 41641
+  protocol          = "udp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  ipv6_cidr_blocks  = ["::/0"]
+}
