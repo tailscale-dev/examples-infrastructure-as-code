@@ -17,6 +17,48 @@ module "tailscale_install_scripts" {
   additional_after_scripts  = var.additional_after_scripts
 }
 
+data "google_compute_subnetwork" "selected" {
+  self_link = "https://www.googleapis.com/compute/v1/${var.subnet}" # requires full URL - https://github.com/hashicorp/terraform-provider-google/issues/9919
+}
+
+resource "google_compute_firewall" "tailscale_ingress_ipv4" {
+  name    = "tailscale-ingress-ipv4"
+  network = data.google_compute_subnetwork.selected.network
+
+  allow {
+    protocol = "udp"
+    ports    = ["41641"]
+  }
+
+  source_ranges = [
+    "0.0.0.0/0",
+  ]
+  target_tags = var.instance_tags
+
+  log_config { #TODO: remove
+    metadata = "INCLUDE_ALL_METADATA"
+  }
+}
+
+resource "google_compute_firewall" "tailscale_ingress_ipv6" {
+  name    = "tailscale-ingress-ipv6"
+  network = data.google_compute_subnetwork.selected.network
+
+  allow {
+    protocol = "udp"
+    ports    = ["41641"]
+  }
+
+  source_ranges = [
+    "::/0",
+  ]
+  target_tags = var.instance_tags
+
+  log_config { #TODO: remove
+    metadata = "INCLUDE_ALL_METADATA"
+  }
+}
+
 data "google_compute_image" "ubuntu" {
   project = "ubuntu-os-cloud"
   family  = "ubuntu-2204-lts"
@@ -27,7 +69,6 @@ resource "google_compute_instance" "tailscale_instance" {
   name         = var.machine_name
   machine_type = var.machine_type
 
-
   boot_disk {
     initialize_params {
       image = data.google_compute_image.ubuntu.self_link
@@ -36,6 +77,9 @@ resource "google_compute_instance" "tailscale_instance" {
 
   network_interface {
     subnetwork = var.subnet
+    access_config {
+      // Ephemeral public IP
+    }
   }
 
   metadata = var.instance_metadata

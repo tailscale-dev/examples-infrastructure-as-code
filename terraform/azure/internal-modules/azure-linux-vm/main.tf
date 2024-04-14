@@ -43,7 +43,7 @@ resource "azurerm_network_security_group" "tailscale_ingress" {
   location            = var.location
   resource_group_name = var.resource_group_name
 
-  name                = "nsg-tailscale-ingress"
+  name = "nsg-tailscale-ingress"
 
   security_rule {
     name                       = "AllowTailscaleInbound"
