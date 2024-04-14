@@ -34,10 +34,6 @@ resource "google_compute_firewall" "tailscale_ingress_ipv4" {
     "0.0.0.0/0",
   ]
   target_tags = var.instance_tags
-
-  log_config { #TODO: remove
-    metadata = "INCLUDE_ALL_METADATA"
-  }
 }
 
 resource "google_compute_firewall" "tailscale_ingress_ipv6" {
@@ -53,10 +49,6 @@ resource "google_compute_firewall" "tailscale_ingress_ipv6" {
     "::/0",
   ]
   target_tags = var.instance_tags
-
-  log_config { #TODO: remove
-    metadata = "INCLUDE_ALL_METADATA"
-  }
 }
 
 data "google_compute_image" "ubuntu" {
