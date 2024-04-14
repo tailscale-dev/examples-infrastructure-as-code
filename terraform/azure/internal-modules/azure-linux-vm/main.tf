@@ -34,11 +34,28 @@ resource "azurerm_network_interface" "primary" {
   enable_ip_forwarding = module.tailscale_install_scripts.ip_forwarding_required
 }
 
-resource "azurerm_network_interface_security_group_association" "primary" {
-  count = length(var.network_security_group_ids)
-
+resource "azurerm_network_interface_security_group_association" "tailscale" {
   network_interface_id      = azurerm_network_interface.primary.id
-  network_security_group_id = var.network_security_group_ids[count.index]
+  network_security_group_id = azurerm_network_security_group.tailscale_ingress.id
+}
+
+resource "azurerm_network_security_group" "tailscale_ingress" {
+  location            = var.location
+  resource_group_name = var.resource_group_name
+
+  name = "nsg-tailscale-ingress"
+
+  security_rule {
+    name                       = "AllowTailscaleInbound"
+    access                     = "Allow"
+    direction                  = "Inbound"
+    priority                   = 100
+    protocol                   = "Udp"
+    source_address_prefix      = "Internet"
+    source_port_range          = "*"
+    destination_address_prefix = "*"
+    destination_port_range     = "41641"
+  }
 }
 
 resource "azurerm_linux_virtual_machine" "tailscale_instance" {
