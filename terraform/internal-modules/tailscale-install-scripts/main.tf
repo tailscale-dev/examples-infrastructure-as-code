@@ -54,6 +54,4 @@ module "tailscale-advertise-routes" {
 
   tailscale_advertise_routes_from_file_on_host = "/root/tailscale-routes-to-advertise.txt"
   tailscale_advertise_aws_service_names        = var.tailscale_advertise_aws_service_names
-  tailscale_advertise_github_service_names     = var.tailscale_advertise_github_service_names
-  tailscale_advertise_okta_cell_names          = var.tailscale_advertise_okta_cell_names
 }

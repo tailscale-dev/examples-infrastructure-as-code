@@ -50,7 +50,7 @@ module "tailscale_aws_ec2" {
   ]
 
   tailscale_advertise_connector = true
-  # tailscale_advertise_github_service_names = [
+  # tailscale_advertise_aws_service_names = [
   #   "GLOBALACCELERATOR",
   # ]
 

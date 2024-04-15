@@ -66,11 +66,6 @@ module "tailscale_azure_linux_virtual_machine" {
   tailscale_advertise_routes = module.network.vnet_address_space
 
   tailscale_advertise_connector = true
-  # tailscale_advertise_github_service_names = [
-  #   "api",
-  #   "packages",
-  #   "website",
-  # ]
 
   depends_on = [
     module.network.natgw_ids, # for private subnets - ensure NAT gateway is available before instance provisioning

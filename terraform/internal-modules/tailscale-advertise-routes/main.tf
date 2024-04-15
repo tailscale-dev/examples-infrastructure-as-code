@@ -3,15 +3,11 @@ locals {
     # boolean - do we have any routes to advertise?
     length(var.tailscale_advertise_routes)
     + length(var.tailscale_advertise_aws_service_names)
-    + length(var.tailscale_advertise_github_service_names)
-    + length(var.tailscale_advertise_okta_cell_names)
   ) == 0
 
   saas_routes_to_advertise = (
     # boolean - do we have any **SaaS** routes to advertise?
     length(var.tailscale_advertise_aws_service_names)
-    + length(var.tailscale_advertise_github_service_names)
-    + length(var.tailscale_advertise_okta_cell_names)
   ) == 0
 
   advertise_routes_script = local.routes_to_advertise ? "" : templatefile(
