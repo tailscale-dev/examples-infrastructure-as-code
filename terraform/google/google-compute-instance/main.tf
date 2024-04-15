@@ -59,11 +59,6 @@ module "tailscale_instance" {
   tailscale_advertise_routes = module.vpc.subnets_ips
 
   tailscale_advertise_connector = true
-  # tailscale_advertise_github_service_names = [
-  #   "api",
-  #   "packages",
-  #   "website",
-  # ]
 
   depends_on = [
     module.vpc.nat_ids, # ensure NAT gateway is available before instance provisioning - primarily for private subnets

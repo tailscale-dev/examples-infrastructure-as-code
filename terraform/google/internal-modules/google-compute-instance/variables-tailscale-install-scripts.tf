@@ -57,13 +57,3 @@ variable "tailscale_advertise_aws_service_names" {
   type        = set(string)
   default     = []
 }
-variable "tailscale_advertise_github_service_names" {
-  description = "List of GitHub Services to retrieve IP prefixes for - e.g. ['web','api']"
-  type        = set(string)
-  default     = []
-}
-variable "tailscale_advertise_okta_cell_names" {
-  description = "List of Okta cells to retrieve IP prefixes for - e.g. ['us_cell_1','emea_cell_2']"
-  type        = set(string)
-  default     = []
-}

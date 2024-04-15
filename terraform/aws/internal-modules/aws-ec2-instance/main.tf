@@ -10,8 +10,6 @@ module "tailscale_install_scripts" {
 
   tailscale_advertise_routes               = var.tailscale_advertise_routes
   tailscale_advertise_aws_service_names    = var.tailscale_advertise_aws_service_names
-  tailscale_advertise_github_service_names = var.tailscale_advertise_github_service_names
-  tailscale_advertise_okta_cell_names      = var.tailscale_advertise_okta_cell_names
 
   additional_before_scripts = var.additional_before_scripts
   additional_after_scripts  = var.additional_after_scripts

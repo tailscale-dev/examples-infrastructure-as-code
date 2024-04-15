@@ -1,13 +1,11 @@
 /**
- * See other files for vendor-specific variables/outputs - `aws.tf`, `github.tf`, etc.
+ * See other files for vendor-specific variables/outputs - `aws.tf`, etc.
  */
 
 output "routes_script" {
   description = "Sript to fetch, parse, and save routes to `var.routes_file_to_append`"
   value = join("\n", compact([
     local.aws_routes_script,
-    local.github_routes_script,
-    local.okta_routes_script,
     local.advertise_routes_script,
   ]))
 }

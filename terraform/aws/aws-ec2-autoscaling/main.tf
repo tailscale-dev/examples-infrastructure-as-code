@@ -64,15 +64,6 @@ module "tailscale_aws_ec2_autoscaling" {
   tailscale_advertise_aws_service_names = [
     "GLOBALACCELERATOR",
   ]
-  tailscale_advertise_github_service_names = [
-    "api",
-    "packages",
-    "website",
-  ]
-  tailscale_advertise_okta_cell_names = [
-    "us_cell_1",
-    "emea_cell_2",
-  ]
 
   depends_on = [
     module.vpc.natgw_ids, # ensure NAT gateway is available before instance provisioning - primarily for private subnets

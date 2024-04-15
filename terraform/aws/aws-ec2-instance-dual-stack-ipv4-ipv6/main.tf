@@ -53,11 +53,6 @@ module "tailscale_aws_ec2" {
   )
 
   tailscale_advertise_connector = true
-  # tailscale_advertise_github_service_names = [
-  #   "api",
-  #   "packages",
-  #   "website",
-  # ]
 
   depends_on = [
     module.vpc.natgw_ids, # ensure NAT gateway is available before instance provisioning - primarily for private subnets

@@ -1,5 +1,5 @@
 /**
- * See other files for vendor-specific variables/outputs - `aws.tf`, `github.tf`, etc.
+ * See other files for vendor-specific variables/outputs - `aws.tf`, etc.
  */
 
 variable "tailscale_advertise_routes_from_file_on_host" {
