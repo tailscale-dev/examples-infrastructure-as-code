@@ -20,7 +20,7 @@ variable "instance_key_name" {
 }
 variable "instance_profile_name" {
   type    = string
-  default = null
+  default = ""
 }
 variable "instance_metadata_options" {
   type = map(string)
