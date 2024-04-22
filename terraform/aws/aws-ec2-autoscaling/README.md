@@ -9,6 +9,7 @@ This example creates the following:
 
 ## Considerations
 
+- The Auto Scaling Group does not define an `instance_refresh` policy as the ASG cannot do a rolling restart with externally manaaged network interfaces (ENIs) as required by this configuration. To update instances to the latest launch template, terminate instances in the ASG in the AWS Console or programmatically. This will release the ENI so the replacement instance can use it.
 - Any advertised routes and exit nodes must still be approved in the Tailscale Admin Console. The code can be updated to use [Auto Approvers for routes](https://tailscale.com/kb/1018/acls/#auto-approvers-for-routes-and-exit-nodes) if this is configured in your ACLs.
 
 ## To use

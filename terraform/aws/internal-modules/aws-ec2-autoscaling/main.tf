@@ -53,8 +53,11 @@ resource "aws_launch_template" "tailscale" {
   instance_type = var.instance_type
   key_name      = var.instance_key_name
 
-  iam_instance_profile {
-    name = var.instance_profile_name
+  dynamic "iam_instance_profile" {
+    for_each = var.instance_profile_name != "" ? [1] : []
+    content {
+      name = var.instance_profile_name
+    }
   }
 
   metadata_options {
@@ -63,6 +66,7 @@ resource "aws_launch_template" "tailscale" {
   }
 
   dynamic "network_interfaces" {
+    # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/scenarios-enis.html#creating-dual-homed-instances-with-workloads-roles-on-distinct-subnets
     for_each = var.network_interfaces
     content {
       delete_on_termination = false
@@ -96,15 +100,20 @@ resource "aws_autoscaling_group" "tailscale" {
   availability_zones = [data.aws_network_interface.selected[0].availability_zone]
 
   desired_capacity = 1
-  min_size         = 1
-  max_size         = 2
+  min_size         = 0
+  max_size         = 1
+
+  /**
+   * Uncomment to allow ASG to replace the instance. It will take several minutes as the ASG 
+   * will try to launch a replacement instance before ENIs have been released.
 
   instance_refresh {
     strategy = "Rolling"
     preferences {
-      min_healthy_percentage = 50
+      min_healthy_percentage = 0
     }
   }
+  */
 
   health_check_grace_period = 300
   health_check_type         = "EC2"
