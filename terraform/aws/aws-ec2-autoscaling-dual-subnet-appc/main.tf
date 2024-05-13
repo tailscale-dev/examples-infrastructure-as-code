@@ -75,7 +75,7 @@ module "tailscale_aws_ec2_autoscaling" {
     git clone https://github.com/tailscale/tailscale /root/appc
     cd /root/appc
     git fetch
-    git checkout maisem/test
+    git checkout e2f8436adb71fe41e9c4d063a26748967d571c5a
     
     cat << INNEREOT2 > /etc/systemd/system/appc.service
 [Unit]
@@ -85,7 +85,7 @@ After=network.target
 [Service]
 WorkingDirectory=/root/appc
 Environment=TS_AUTH_KEY=${tailscale_tailnet_key.appc.key}
-ExecStart=/root/appc/tool/go run ./cmd/appc --hostname=${local.name}-appc --site-id=1
+ExecStart=/root/appc/tool/go run ./cmd/appc --hostname=${local.name}-appc --site-id=10 --v4-pfx=100.64.10.8/30
 Restart=on-failure
 User=root
 LimitNOFILE=10240
