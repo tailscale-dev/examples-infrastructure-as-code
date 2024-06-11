@@ -10,6 +10,9 @@ module "vpc" {
   name = var.name
   tags = var.tags
 
+  public_subnet_tags  = merge(var.tags, { Name = "${var.name}-public" })
+  private_subnet_tags = merge(var.tags, { Name = "${var.name}-private" })
+
   cidr = var.cidr
 
   azs             = var.azs != null ? var.azs : data.aws_availability_zones.available.zone_ids
