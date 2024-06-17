@@ -116,7 +116,7 @@ resource "tailscale_tailnet_key" "recorder" {
   preauthorized       = true
   reusable            = true
   recreate_if_invalid = "always"
-  tags                = [
+  tags = [
     "tag:example-sessionrecorder",
   ]
 }
@@ -126,7 +126,7 @@ resource "tailscale_tailnet_key" "main" {
   preauthorized       = true
   reusable            = true
   recreate_if_invalid = "always"
-  tags                = [
+  tags = [
     "tag:example-infra",
   ]
 }

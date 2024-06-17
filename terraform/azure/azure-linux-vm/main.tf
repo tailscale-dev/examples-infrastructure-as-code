@@ -39,7 +39,7 @@ resource "tailscale_tailnet_key" "main" {
   preauthorized       = true
   reusable            = true
   recreate_if_invalid = "always"
-  tags                = [
+  tags = [
     "tag:example-infra",
     "tag:example-exitnode",
     "tag:example-subnetrouter",
@@ -62,9 +62,9 @@ module "tailscale_azure_linux_virtual_machine" {
   resource_tags         = local.tags
 
   # Variables for Tailscale resources
-  tailscale_hostname            = local.name
-  tailscale_auth_key            = tailscale_tailnet_key.main.key
-  tailscale_set_preferences     = [
+  tailscale_hostname = local.name
+  tailscale_auth_key = tailscale_tailnet_key.main.key
+  tailscale_set_preferences = [
     "--auto-update",
   ]
   tailscale_ssh                 = true

@@ -45,9 +45,9 @@ module "tailscale_aws_ec2" {
   ]
 
   # Variables for Tailscale resources
-  tailscale_hostname            = local.name
-  tailscale_auth_key            = tailscale_tailnet_key.main.key
-  tailscale_set_preferences     = [
+  tailscale_hostname = local.name
+  tailscale_auth_key = tailscale_tailnet_key.main.key
+  tailscale_set_preferences = [
     "--auto-update",
   ]
   tailscale_ssh                 = true
