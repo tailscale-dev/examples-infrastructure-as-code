@@ -1,11 +1,11 @@
 locals {
-  name = var.name != "" ? var.name : "example-${basename(path.cwd)}"
 
-  tags = length(var.tags) > 0 ? var.tags : ["example"]
+  name = "example-${basename(path.cwd)}"
 
-  metadata = length(var.metadata) > 0 ? var.metadata : {
+  metadata = {
     Name = local.name
   }
+  tags = []
 }
 
 module "vpc" {
@@ -35,7 +35,12 @@ resource "tailscale_tailnet_key" "main" {
   preauthorized       = true
   reusable            = true
   recreate_if_invalid = "always"
-  tags                = var.tailscale_device_tags
+  tags = [
+    "tag:example-infra",
+    "tag:example-exitnode",
+    "tag:example-subnetrouter",
+    "tag:example-appconnector",
+  ]
 }
 
 module "tailscale_instance" {
@@ -43,16 +48,18 @@ module "tailscale_instance" {
 
   zone         = var.zone
   machine_name = local.name
-  machine_type = var.machine_type
+  machine_type = "e2-medium"
   subnet       = module.vpc.subnets_ids[0]
 
   instance_metadata = local.metadata
   instance_tags     = local.tags
 
   # Variables for Tailscale resources
-  tailscale_hostname            = local.name
-  tailscale_auth_key            = tailscale_tailnet_key.main.key
-  tailscale_set_preferences     = var.tailscale_set_preferences
+  tailscale_hostname = local.name
+  tailscale_auth_key = tailscale_tailnet_key.main.key
+  tailscale_set_preferences = [
+    "--auto-update",
+  ]
   tailscale_ssh                 = true
   tailscale_advertise_exit_node = true
 
