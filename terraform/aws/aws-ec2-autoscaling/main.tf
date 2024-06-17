@@ -23,7 +23,7 @@ resource "tailscale_tailnet_key" "main" {
   preauthorized       = true
   reusable            = true
   recreate_if_invalid = "always"
-  tags                = [
+  tags = [
     "tag:example-infra",
     "tag:example-exitnode",
     "tag:example-subnetrouter",
@@ -48,15 +48,15 @@ module "tailscale_aws_ec2_autoscaling" {
   source = "../internal-modules/aws-ec2-autoscaling/"
 
   autoscaling_group_name = local.name
-  instance_type = "t4g.micro"
-  instance_tags = local.tags
+  instance_type          = "t4g.micro"
+  instance_tags          = local.tags
 
   network_interfaces = [aws_network_interface.primary.id]
 
   # Variables for Tailscale resources
-  tailscale_auth_key            = tailscale_tailnet_key.main.key
-  tailscale_hostname            = local.name
-  tailscale_set_preferences     = [
+  tailscale_auth_key = tailscale_tailnet_key.main.key
+  tailscale_hostname = local.name
+  tailscale_set_preferences = [
     "--auto-update",
   ]
   tailscale_ssh                 = true
