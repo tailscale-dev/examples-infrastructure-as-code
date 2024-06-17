@@ -1,7 +1,7 @@
 locals {
-  name = var.name != "" ? var.name : "example-${basename(path.cwd)}"
+  name = "example-${basename(path.cwd)}"
 
-  tags = length(var.tags) > 0 ? var.tags : {
+  tags = {
     Name = local.name
   }
 }
@@ -12,10 +12,10 @@ module "vpc" {
   name = local.name
   tags = local.tags
 
-  cidr = var.vpc_cidr_block
+  cidr = "10.0.80.0/22"
 
-  public_subnets  = var.public_subnets
-  private_subnets = var.private_subnets
+  public_subnets  = ["10.0.80.0/24"]
+  private_subnets = ["10.0.81.0/24"]
 }
 
 resource "aws_vpc_endpoint" "recorder" {
@@ -116,7 +116,9 @@ resource "tailscale_tailnet_key" "recorder" {
   preauthorized       = true
   reusable            = true
   recreate_if_invalid = "always"
-  tags                = var.tailscale_device_tags_recorder
+  tags = [
+    "tag:example-sessionrecorder",
+  ]
 }
 
 resource "tailscale_tailnet_key" "main" {
@@ -124,7 +126,9 @@ resource "tailscale_tailnet_key" "main" {
   preauthorized       = true
   reusable            = true
   recreate_if_invalid = "always"
-  tags                = var.tailscale_device_tags
+  tags = [
+    "tag:example-infra",
+  ]
 }
 
 resource "aws_network_interface" "primary" {
@@ -144,17 +148,18 @@ module "tailscale_aws_ec2_autoscaling" {
   source = "../internal-modules/aws-ec2-autoscaling/"
 
   autoscaling_group_name = local.name
+  instance_type          = "t4g.micro"
+  instance_tags          = local.tags
 
   network_interfaces = [aws_network_interface.primary.id]
 
-  instance_type = var.instance_type
-  instance_tags = local.tags
-
   # Variables for Tailscale resources
-  tailscale_hostname        = local.name
-  tailscale_auth_key        = tailscale_tailnet_key.main.key
-  tailscale_set_preferences = var.tailscale_set_preferences
-  tailscale_ssh             = true
+  tailscale_hostname = local.name
+  tailscale_auth_key = tailscale_tailnet_key.main.key
+  tailscale_set_preferences = [
+    "--auto-update",
+  ]
+  tailscale_ssh = true
 
   #
   # Set up Tailscale Session Recorder (tsrecorder)
