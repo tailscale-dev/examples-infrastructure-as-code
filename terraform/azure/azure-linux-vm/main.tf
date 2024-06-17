@@ -1,13 +1,13 @@
 locals {
-  name = var.name != "" ? var.name : "example-${basename(path.cwd)}"
+  name = "example-${basename(path.cwd)}"
 
-  tags = length(var.tags) > 0 ? var.tags : {
+  tags = {
     Name = local.name
   }
 }
 
 resource "azurerm_resource_group" "main" {
-  location = var.location
+  location = "centralus"
   name     = local.name
 }
 
@@ -39,7 +39,12 @@ resource "tailscale_tailnet_key" "main" {
   preauthorized       = true
   reusable            = true
   recreate_if_invalid = "always"
-  tags                = var.tailscale_device_tags
+  tags                = [
+    "tag:example-infra",
+    "tag:example-exitnode",
+    "tag:example-subnetrouter",
+    "tag:example-appconnector",
+  ]
 }
 
 module "tailscale_azure_linux_virtual_machine" {
@@ -52,14 +57,16 @@ module "tailscale_azure_linux_virtual_machine" {
   primary_subnet_id = module.network.public_subnet_id
 
   machine_name          = local.name
-  machine_size          = var.machine_size
+  machine_size          = "Standard_DS1_v2"
   admin_public_key_path = var.admin_public_key_path
   resource_tags         = local.tags
 
   # Variables for Tailscale resources
   tailscale_hostname            = local.name
   tailscale_auth_key            = tailscale_tailnet_key.main.key
-  tailscale_set_preferences     = var.tailscale_set_preferences
+  tailscale_set_preferences     = [
+    "--auto-update",
+  ]
   tailscale_ssh                 = true
   tailscale_advertise_exit_node = true
 
