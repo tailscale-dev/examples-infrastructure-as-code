@@ -90,7 +90,8 @@ module "tailscale_aws_ec2_autoscaling" {
   tailscale_advertise_routes = [
     # module.prod_vpc.vpc_cidr_block,
     # module.prod_vpc.private_subnets[0],
-    module.mgmt_vpc.private_subnets[0],
+    module.mgmt_vpc.vpc_cidr_block,
+    # module.mgmt_vpc.private_subnets[0],
     # var.other_vpc_cidr,
   ]
 
@@ -99,8 +100,91 @@ module "tailscale_aws_ec2_autoscaling" {
   #   "GLOBALACCELERATOR",
   # ]
 
+  additional_after_scripts = [
+    local.netplan_tgw
+  ]
+
   depends_on = [
     module.prod_vpc.natgw_ids, # ensure NAT gateway is available before instance provisioning - primarily for private subnets
   ]
 }
 
+locals {
+  netplan_tgw_subnet_public = module.prod_vpc.public_subnets_cidr_blocks[0]
+  netplan_tgw_subnet_private = module.prod_vpc.private_subnets_cidr_blocks[0]
+
+  netplan_tgw = <<-EOF
+  #!/bin/bash
+  #
+  # Configures routing via netplan to acto allow routing between two networks.
+  # https://people.ubuntu.com/~slyon/netplan-docs/examples/#configuring-source-routing
+  #
+
+  echo -e '\n#\n# Beginning dual-subnet netplan configuration...\n#\n'
+
+  TAILSCALE_NETPLAN_FILE=/etc/netplan/52-tailscale-custom-routes.yaml
+
+  PRIMARY_NETDEV=$(ip route show ${local.netplan_tgw_subnet_public} | cut -f3 -d' ')
+  SECONDARY_NETDEV=$(ip route show ${local.netplan_tgw_subnet_private} | cut -f3 -d' ')
+
+  cat <<EOT > $TAILSCALE_NETPLAN_FILE
+  network:
+      ethernets:
+          $PRIMARY_NETDEV: # public interface
+              dhcp4: true
+              dhcp4-overrides:
+                  use-routes: false              # prevent default route via dhcp on 2nd interface from being installed into default routing table
+              dhcp6: false
+              match:
+                  macaddress: $(cat /sys/class/net/$PRIMARY_NETDEV/address)
+              set-name: $PRIMARY_NETDEV
+              routes:
+              - to: ${local.netplan_tgw_subnet_public}
+                via: ${cidrhost(local.netplan_tgw_subnet_public,1)}
+                table: 101
+              routing-policy:
+              - from: ${local.netplan_tgw_subnet_public}
+                table: 101
+          $SECONDARY_NETDEV: # private interface
+              dhcp4: true
+              dhcp4-overrides:
+                  route-metric: 100
+              dhcp6: false
+              match:
+                  macaddress: $(cat /sys/class/net/$SECONDARY_NETDEV/address)
+              set-name: $SECONDARY_NETDEV
+              routes:
+              - to: ${local.netplan_tgw_subnet_private}
+                via: ${cidrhost(local.netplan_tgw_subnet_public,1)}
+                table: 102
+              routing-policy:
+              - from: ${local.netplan_tgw_subnet_public}
+                table: 102
+      version: 2
+  EOT
+
+  chmod 600 $TAILSCALE_NETPLAN_FILE
+
+  mv /etc/netplan/50-cloud-init.yaml /etc/netplan/50-cloud-init.yaml.old
+
+  netplan apply
+
+  systemctl list-unit-files tailscaled.service > /dev/null
+  if [ $? -eq 0 ]; then
+      systemctl restart tailscaled
+      echo -e '\n#\n# Tailscale restart complete.\n#\n'
+  fi
+
+  #
+  # pause briefly to let route changes "settle"
+  # without this, immediate network connections (e.g. curl google.com) fail with 'unknown host'
+  #
+  sleep 1
+
+  echo -e '\n#\n# Complete.\n#\n'
+  EOF
+}
+
+# output "netplan_tgw" {
+#   value = local.netplan_tgw
+# }
