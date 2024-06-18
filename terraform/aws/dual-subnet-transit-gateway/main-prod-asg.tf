@@ -132,8 +132,6 @@ locals {
       ethernets:
           $PRIMARY_NETDEV: # public interface
               dhcp4: true
-              dhcp4-overrides:
-                  use-routes: false              # prevent default route via dhcp on 2nd interface from being installed into default routing table
               dhcp6: false
               match:
                   macaddress: $(cat /sys/class/net/$PRIMARY_NETDEV/address)
