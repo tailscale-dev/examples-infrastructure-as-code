@@ -2,7 +2,7 @@ import * as path from 'path';
 import * as apigateway from "@pulumi/aws-apigateway";
 import * as aws from "@pulumi/aws";
 
-import * as handler from "./handler";
+import * as handler from "./handlerPulumi";
 
 const name = `example-${path.basename(process.cwd())}`;
 
@@ -35,7 +35,7 @@ const api = new apigateway.RestAPI(name, {
         {
             path: "/",
             method: "POST",
-            eventHandler: handler.getHandler(`${name}-fn`),
+            eventHandler: handler.getPulumiHandler(`${name}-fn`),
         },
     ],
 });
