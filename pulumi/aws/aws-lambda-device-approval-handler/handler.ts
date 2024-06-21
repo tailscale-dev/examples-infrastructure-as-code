@@ -1,6 +1,6 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 
-interface TailscaleEvent {
+interface TailnetEvent {
     timestamp: string;
     version: number;
     type: string;
@@ -10,10 +10,10 @@ interface TailscaleEvent {
 }
 
 export const lambdaHandler = async (ev: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+    // TODO: https://tailscale.com/kb/1213/webhooks#verifying-an-event-signature
     try {
-        // TODO: https://tailscale.com/kb/1213/webhooks#verifying-an-event-signature
-        let events: TailscaleEvent[] = JSON.parse(ev.body!);
-        events.forEach((event) => {
+        let tailnetEvents: TailnetEvent[] = JSON.parse(ev.body!);
+        tailnetEvents.forEach((event) => {
             switch (event.type) {
                 case "nodeNeedsApproval":
                     eventFunctions.nodeNeedsApproval(event);
@@ -30,18 +30,16 @@ export const lambdaHandler = async (ev: APIGatewayProxyEvent): Promise<APIGatewa
         console.log(err);
         return {
             statusCode: 500,
-            body: JSON.stringify({
-                message: 'some error happened',
-            }),
+            body: JSON.stringify({ message: 'An error occurred.' }),
         };
     }
 };
 
-const nodeNeedsApprovalHandler = function (event: TailscaleEvent) {
+const nodeNeedsApprovalHandler = function (event: TailnetEvent) {
     console.log(`Handling event type [${event.type}]`);
 }
 
-const unhandledHandler = function (event: TailscaleEvent) {
+const unhandledHandler = function (event: TailnetEvent) {
     console.log(`Skipping unhandled event type [${event.type}]`);
 }
 
