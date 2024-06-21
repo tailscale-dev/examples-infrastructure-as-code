@@ -1,0 +1,7 @@
+name: tailscale-lambda-device-approval-handler
+runtime: nodejs
+description: Example of handling a Tailscale Device Approval Webhook in Lambda
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: aws-typescript
