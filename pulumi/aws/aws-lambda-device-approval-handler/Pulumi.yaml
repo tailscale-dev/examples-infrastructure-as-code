@@ -1,4 +1,4 @@
-name: tailscale-lambda-device-approval-handler
+name: aws-lambda-device-approval-handler
 runtime: nodejs
 description: Example of handling a Tailscale Device Approval Webhook in Lambda
 config:
