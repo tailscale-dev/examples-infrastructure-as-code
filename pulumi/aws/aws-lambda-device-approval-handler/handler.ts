@@ -35,8 +35,8 @@ export async function lambdaHandler(ev: APIGatewayProxyEvent): Promise<APIGatewa
                     successCount++;
                     break;
                 case "ERROR":
+                    console.log(`Error processing event [${JSON.stringify(it.event)}]: ${it.error}`);
                     errorCount++;
-                    console.log(`Error processing event: ${it.error}`);
                     break;
                 case "IGNORED":
                     ignoreCount++;
@@ -52,8 +52,7 @@ export async function lambdaHandler(ev: APIGatewayProxyEvent): Promise<APIGatewa
 }
 
 function generateResponseBody(statusCode: number, ev: APIGatewayProxyEvent, successCount: number, errorCount: number, ignoreCount: number): APIGatewayProxyResult {
-    console.log(`success count: [${successCount}], error count: [${errorCount}], ignore count: [${ignoreCount}]`);
-    return {
+    const result = {
         statusCode: statusCode,
         body: JSON.stringify({
             message: (statusCode == 200 ? "ok" : "An error occurred."),
@@ -65,6 +64,8 @@ function generateResponseBody(statusCode: number, ev: APIGatewayProxyEvent, succ
             },
         }),
     };
+    console.log(`returning response: ${JSON.stringify(result)}`);
+    return result
 }
 
 async function unhandledHandler(event: TailnetEvent): Promise<ProcessingResult> {
@@ -75,6 +76,14 @@ async function unhandledHandler(event: TailnetEvent): Promise<ProcessingResult> 
 async function nodeNeedsApprovalHandler(event: TailnetEvent): Promise<ProcessingResult> {
     try {
         console.log(`Handling event type [${event.type}]`);
+
+        const response = await getDevice(event.data as TailnetEventDeviceData);
+        if (!response.ok) {
+            throw new Error(`Failed to get device [${event.data.nodeID}]`);
+        }
+        const json = await response.json();
+        console.log(`get device response [${JSON.stringify(response)}]`);
+
         await approveDevice(event.data as TailnetEventDeviceData);
         return { event: event, result: "SUCCESS", } as ProcessingResult;
     } catch (err: any) {
@@ -86,23 +95,31 @@ export const ENV_TAILSCALE_OAUTH_CLIENT_ID = "OAUTH_CLIENT_ID";
 export const ENV_TAILSCALE_OAUTH_CLIENT_SECRET = "OAUTH_CLIENT_SECRET";
 const TAILSCALE_CONTROL_URL = "https://login.tailscale.com";
 
+// https://github.com/tailscale/tailscale/blob/main/publicapi/device.md#get-device
+async function getDevice(event: TailnetEventDeviceData): Promise<Response> {
+    console.log(`Getting device [${event.nodeID}]`);
+    const data = await makeAuthenticatedRequest("GET", `${TAILSCALE_CONTROL_URL}/api/v2/device/${event.nodeID}?fields=all`);
+    if (!data.ok) {
+        throw new Error(`Failed to get device [${event.nodeID}]`);
+    }
+    return data;
+}
+
 // https://github.com/tailscale/tailscale/blob/main/publicapi/device.md#authorize-device
 async function approveDevice(device: TailnetEventDeviceData) {
     console.log(`Approving device [${device.nodeID}:${device.deviceName}]`);
-    const data = await makeAuthenticatedPost(`${TAILSCALE_CONTROL_URL}/api/v2/device/${device.nodeID}/authorized`, JSON.stringify({ "authorized": true }));
-    const json = await data.json();
-    console.log(`device approval response [${JSON.stringify(json)}]`);
+    const data = await makeAuthenticatedRequest("POST", `${TAILSCALE_CONTROL_URL}/api/v2/device/${device.nodeID}/authorized`, JSON.stringify({ "authorized": true }));
     if (!data.ok) {
         throw new Error(`Failed to approve device [${device.nodeID}:${device.deviceName}]`);
     }
 }
 
 // https://tailscale.com/kb/1215/oauth-clients
-export async function getAccessToken(): Promise<any> {
+export async function getAccessToken(): Promise<Response> {
     const oauthClientId = process.env[ENV_TAILSCALE_OAUTH_CLIENT_ID];
     const oauthClientSecret = process.env[ENV_TAILSCALE_OAUTH_CLIENT_SECRET];
     if (!oauthClientId || !oauthClientSecret) {
-        throw new Error(`Missing required environment variables ${ENV_TAILSCALE_OAUTH_CLIENT_ID} and ${ENV_TAILSCALE_OAUTH_CLIENT_SECRET}. See https://tailscale.com/kb/1215/oauth-clients.`);
+        throw new Error(`Missing required environment variables [${ENV_TAILSCALE_OAUTH_CLIENT_ID}] and [${ENV_TAILSCALE_OAUTH_CLIENT_SECRET}]. See https://tailscale.com/kb/1215/oauth-clients.`);
     }
 
     const options: RequestInit = {
@@ -112,15 +129,19 @@ export async function getAccessToken(): Promise<any> {
     };
 
     // console.log(`getting access token`);
-    return await httpsRequest(`${TAILSCALE_CONTROL_URL}/api/v2/oauth/token`, options);
+    const data = await httpsRequest(`${TAILSCALE_CONTROL_URL}/api/v2/oauth/token`, options);
+    if (!data.ok) {
+        throw new Error(`Failed to get an access token.`);
+    }
+    return data;
 }
 
-const makeAuthenticatedPost = async function (url: string, body: string): Promise<Response> {
+const makeAuthenticatedRequest = async function (method: "GET" | "POST", url: string, body?: string): Promise<Response> {
     const accessTokenResponse = await getAccessToken();
     const result = await accessTokenResponse.json();
 
     const options: RequestInit = {
-        method: "POST",
+        method: method,
         headers: { "Authorization": `Bearer ${result.access_token}` },
         body: body,
     };
@@ -129,7 +150,7 @@ const makeAuthenticatedPost = async function (url: string, body: string): Promis
 }
 
 async function httpsRequest(url: string, options: any): Promise<Response> {
-    // console.log(`Making HTTP request to [${url}] with options [${JSON.stringify(options)}]`); // TODO: add verbose logging flag?
+    console.log(`Making HTTP request to [${url}] with options [${JSON.stringify(options)}]`); // TODO: add verbose logging flag?
     return await fetch(url, options);
 }
 
