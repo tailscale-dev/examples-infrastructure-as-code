@@ -99,12 +99,15 @@ async function nodeNeedsApprovalHandler(event: TailnetEvent): Promise<Processing
         /**
          * Customize approval logic here.
          */
-        if (["windows", "macos"].includes(attributesResponseJson["attributes"]["node:os"])) {
+        if (
+            ["windows", "macos","linux"].includes(attributesResponseJson["attributes"]["node:os"])
+            && attributesResponseJson["attributes"]["node:tsReleaseTrack"] == "stable"
+        ) {
             // approve device
             await approveDevice(eventData);
         }
         else {
-            console.log(`NOT approving device [${eventData.nodeID}:${eventData.deviceName}] with attributes [${attributesResponseJson}]`);
+            console.log(`NOT approving device [${eventData.nodeID}:${eventData.deviceName}] with attributes [${JSON.stringify(attributesResponseJson)}]`);
         }
 
         return { event: event, result: "SUCCESS", } as ProcessingResult;
