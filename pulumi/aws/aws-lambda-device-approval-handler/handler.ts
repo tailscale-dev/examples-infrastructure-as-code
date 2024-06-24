@@ -4,9 +4,9 @@ export async function lambdaHandler(ev: APIGatewayProxyEvent): Promise<APIGatewa
     // TODO: https://tailscale.com/kb/1213/webhooks#verifying-an-event-signature
     // console.log(`Received event: ${JSON.stringify(ev)}`); // TODO: add verbose logging flag?
 
-    let successCount = 0;
-    let errorCount = 0;
-    let ignoreCount = 0;
+    let processedCount = 0;
+    let ignoredCount = 0;
+    let erroredCount = 0;
     try {
         let decodedBody = ev.body;
         if (ev.isBase64Encoded) {
@@ -32,35 +32,35 @@ export async function lambdaHandler(ev: APIGatewayProxyEvent): Promise<APIGatewa
         results.forEach(it => {
             switch (it.result) {
                 case "SUCCESS":
-                    successCount++;
+                    processedCount++;
+                    break;
+                case "IGNORED":
+                    ignoredCount++;
                     break;
                 case "ERROR":
                     console.log(`Error processing event [${JSON.stringify(it.event)}]: ${it.error}`);
-                    errorCount++;
-                    break;
-                case "IGNORED":
-                    ignoreCount++;
+                    erroredCount++;
                     break;
             }
         });
 
-        return generateResponseBody((errorCount > 0 ? 500 : 200), ev, successCount, errorCount, ignoreCount);
+        return generateResponseBody((erroredCount > 0 ? 500 : 200), ev, processedCount, erroredCount, ignoredCount);
     } catch (err) {
         console.log(err);
-        return generateResponseBody(500, ev, successCount, errorCount, ignoreCount);
+        return generateResponseBody(500, ev, processedCount, erroredCount, ignoredCount);
     }
 }
 
-function generateResponseBody(statusCode: number, ev: APIGatewayProxyEvent, successCount: number, errorCount: number, ignoreCount: number): APIGatewayProxyResult {
+function generateResponseBody(statusCode: number, ev: APIGatewayProxyEvent, processedCount: number, erroredCount: number, ignoredCount: number): APIGatewayProxyResult {
     const result = {
         statusCode: statusCode,
         body: JSON.stringify({
             message: (statusCode == 200 ? "ok" : "An error occurred."),
             // requestId: ev.requestContext.requestId, // TODO: This requestId doesn't match what's in the lambda logs.
             eventResults: {
-                processed: successCount,
-                ignored: ignoreCount,
-                errored: errorCount,
+                processed: processedCount,
+                errored: erroredCount,
+                ignored: ignoredCount,
             },
         }),
     };
@@ -100,7 +100,7 @@ async function nodeNeedsApprovalHandler(event: TailnetEvent): Promise<Processing
          * Customize approval logic here.
          */
         if (
-            ["windows", "macos","linux"].includes(attributesResponseJson["attributes"]["node:os"])
+            ["windows", "macos", "linux"].includes(attributesResponseJson["attributes"]["node:os"])
             && attributesResponseJson["attributes"]["node:tsReleaseTrack"] == "stable"
         ) {
             // approve device
@@ -209,5 +209,5 @@ interface TailnetEventDeviceData {
 interface ProcessingResult {
     event: TailnetEvent;
     result: "SUCCESS" | "ERROR" | "IGNORED";
-    error: Error | null;
-}
+    error?: Error;
+};
