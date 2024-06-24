@@ -57,10 +57,10 @@ function generateResponseBody(statusCode: number, ev: APIGatewayProxyEvent, succ
         body: JSON.stringify({
             message: (statusCode == 200 ? "ok" : "An error occurred."),
             // requestId: ev.requestContext.requestId, // TODO: This requestId doesn't match what's in the lambda logs.
-            eventCounts: {
-                success: successCount,
+            eventResults: {
+                processed: successCount,
                 ignored: ignoreCount,
-                errors: errorCount,
+                errored: errorCount,
             },
         }),
     };
@@ -77,14 +77,36 @@ async function nodeNeedsApprovalHandler(event: TailnetEvent): Promise<Processing
     try {
         console.log(`Handling event type [${event.type}]`);
 
-        const response = await getDevice(event.data as TailnetEventDeviceData);
-        if (!response.ok) {
-            throw new Error(`Failed to get device [${event.data.nodeID}]`);
-        }
-        const json = await response.json();
-        console.log(`get device response [${JSON.stringify(response)}]`);
+        const eventData = event.data as TailnetEventDeviceData;
 
-        await approveDevice(event.data as TailnetEventDeviceData);
+        // get device details and attributes
+        const deviceResponse = await getDevice(eventData);
+        if (!deviceResponse.ok) {
+            throw new Error(`Failed to get device [${eventData.nodeID}]`);
+        }
+
+        const attributesResponse = await getDeviceAttributes(eventData);
+        if (!attributesResponse.ok) {
+            throw new Error(`Failed to get device attributes [${eventData.nodeID}]`);
+        }
+
+        // inspect device details
+        const deviceResponseJson = await deviceResponse.json();
+        console.log(`Device response [${JSON.stringify(deviceResponseJson)}]`);
+        const attributesResponseJson = await attributesResponse.json();
+        console.log(`Device attributes response [${JSON.stringify(attributesResponseJson)}]`);
+
+        /**
+         * Customize approval logic here.
+         */
+        if (["windows", "macos"].includes(attributesResponseJson["attributes"]["node:os"])) {
+            // approve device
+            await approveDevice(eventData);
+        }
+        else {
+            console.log(`NOT approving device [${eventData.nodeID}:${eventData.deviceName}] with attributes [${attributesResponseJson}]`);
+        }
+
         return { event: event, result: "SUCCESS", } as ProcessingResult;
     } catch (err: any) {
         return { event: event, result: "ERROR", error: err, } as ProcessingResult;
@@ -95,10 +117,20 @@ export const ENV_TAILSCALE_OAUTH_CLIENT_ID = "OAUTH_CLIENT_ID";
 export const ENV_TAILSCALE_OAUTH_CLIENT_SECRET = "OAUTH_CLIENT_SECRET";
 const TAILSCALE_CONTROL_URL = "https://login.tailscale.com";
 
+// https://github.com/tailscale/tailscale/blob/main/publicapi/device.md#get-device-posture-attributes
+async function getDeviceAttributes(event: TailnetEventDeviceData): Promise<Response> {
+    console.log(`Getting device attributes [${event.nodeID}]`);
+    const data = await makeAuthenticatedRequest("GET", `${TAILSCALE_CONTROL_URL}/api/v2/device/${event.nodeID}/attributes`);
+    if (!data.ok) {
+        throw new Error(`Failed to get device [${event.nodeID}]`);
+    }
+    return data;
+}
+
 // https://github.com/tailscale/tailscale/blob/main/publicapi/device.md#get-device
 async function getDevice(event: TailnetEventDeviceData): Promise<Response> {
     console.log(`Getting device [${event.nodeID}]`);
-    const data = await makeAuthenticatedRequest("GET", `${TAILSCALE_CONTROL_URL}/api/v2/device/${event.nodeID}?fields=all`);
+    const data = await makeAuthenticatedRequest("GET", `${TAILSCALE_CONTROL_URL}/api/v2/device/${event.nodeID}`);
     if (!data.ok) {
         throw new Error(`Failed to get device [${event.nodeID}]`);
     }
@@ -150,7 +182,7 @@ const makeAuthenticatedRequest = async function (method: "GET" | "POST", url: st
 }
 
 async function httpsRequest(url: string, options: any): Promise<Response> {
-    console.log(`Making HTTP request to [${url}] with options [${JSON.stringify(options)}]`); // TODO: add verbose logging flag?
+    // console.log(`Making HTTP request to [${url}] with options [${JSON.stringify(options)}]`); // TODO: add verbose logging flag?
     return await fetch(url, options);
 }
 
