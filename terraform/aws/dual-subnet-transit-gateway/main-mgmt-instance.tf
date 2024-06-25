@@ -36,6 +36,7 @@ resource "aws_security_group_rule" "mgmt_instance_vpc_ingress" {
   cidr_blocks = [
     # module.mgmt_vpc.vpc_cidr_block,
     "10.0.0.0/8",
+    "192.168.0.0/20",
   ]
 }
 

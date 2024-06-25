@@ -6,7 +6,7 @@
 
 echo -e '\n#\n# Beginning dual-subnet netplan configuration...\n#\n'
 
-TAILSCALE_NETPLAN_FILE=/etc/netplan/51-tailscale-custom-routes.yaml
+TAILSCALE_NETPLAN_FILE=/etc/netplan/51-tailscale-custom-routes.yaml.bak
 
 PRIMARY_NETDEV=$(ip route show ${primary_subnet_cidr} | cut -f3 -d' ')
 SECONDARY_NETDEV=$(ip route show ${secondary_subnet_cidr} | cut -f3 -d' ')
@@ -46,7 +46,7 @@ chmod 600 $TAILSCALE_NETPLAN_FILE
 
 mv /etc/netplan/50-cloud-init.yaml /etc/netplan/50-cloud-init.yaml.old
 
-netplan apply
+# netplan apply
 
 systemctl list-unit-files tailscaled.service > /dev/null
 if [ $? -eq 0 ]; then

@@ -38,6 +38,7 @@ resource "aws_security_group_rule" "prod_vpc_ingress" {
     # module.prod_vpc.vpc_cidr_block,
     # module.mgmt_vpc.vpc_cidr_block,
     "10.0.0.0/8",
+    "192.168.0.0/20",
   ]
 }
 
@@ -88,11 +89,8 @@ module "tailscale_aws_ec2_autoscaling" {
   # tailscale_advertise_exit_node = true
 
   tailscale_advertise_routes = [
-    # module.prod_vpc.vpc_cidr_block,
-    # module.prod_vpc.private_subnets[0],
     module.mgmt_vpc.vpc_cidr_block,
-    # module.mgmt_vpc.private_subnets[0],
-    # var.other_vpc_cidr,
+    module.staging_vpc.vpc_cidr_block,
   ]
 
   # tailscale_advertise_connector = true
@@ -110,13 +108,13 @@ module "tailscale_aws_ec2_autoscaling" {
 }
 
 locals {
-  netplan_tgw_subnet_public = module.prod_vpc.public_subnets_cidr_blocks[0]
+  netplan_tgw_subnet_public  = module.prod_vpc.public_subnets_cidr_blocks[0]
   netplan_tgw_subnet_private = module.prod_vpc.private_subnets_cidr_blocks[0]
 
   netplan_tgw = <<-EOF
   #!/bin/bash
   #
-  # Configures routing via netplan to acto allow routing between two networks.
+  # Configures routing via netplan to allow routing between two networks.
   # https://people.ubuntu.com/~slyon/netplan-docs/examples/#configuring-source-routing
   #
 
@@ -124,8 +122,11 @@ locals {
 
   TAILSCALE_NETPLAN_FILE=/etc/netplan/52-tailscale-custom-routes.yaml
 
-  PRIMARY_NETDEV=$(ip route show ${local.netplan_tgw_subnet_public} | cut -f3 -d' ')
-  SECONDARY_NETDEV=$(ip route show ${local.netplan_tgw_subnet_private} | cut -f3 -d' ')
+  PRIMARY_NETDEV=$(ip route show ${local.netplan_tgw_subnet_public} | cut -d' ' -f3)
+  SECONDARY_NETDEV=$(ip route show ${local.netplan_tgw_subnet_private} | cut -d' ' -f3)
+
+  PRIMARY_NETDEV_IP=$(ip route show ${local.netplan_tgw_subnet_public} | cut -d' ' -f9)
+  SECONDARY_NETDEV_IP=$(ip route show ${local.netplan_tgw_subnet_private} | cut -d' ' -f9)
 
   cat <<EOT > $TAILSCALE_NETPLAN_FILE
   network:
@@ -136,13 +137,13 @@ locals {
               match:
                   macaddress: $(cat /sys/class/net/$PRIMARY_NETDEV/address)
               set-name: $PRIMARY_NETDEV
-              routes:
-              - to: ${local.netplan_tgw_subnet_public}
-                via: ${cidrhost(local.netplan_tgw_subnet_public,1)}
-                table: 101
-              routing-policy:
-              - from: ${local.netplan_tgw_subnet_public}
-                table: 101
+              # routes:
+              # - table: 101
+              #   to: ${local.netplan_tgw_subnet_public}
+              #   via: ${cidrhost(local.netplan_tgw_subnet_public, 1)}
+              # routing-policy:
+              # - table: 101
+              #   from: ${local.netplan_tgw_subnet_public}
           $SECONDARY_NETDEV: # private interface
               dhcp4: true
               dhcp4-overrides:
@@ -152,12 +153,16 @@ locals {
                   macaddress: $(cat /sys/class/net/$SECONDARY_NETDEV/address)
               set-name: $SECONDARY_NETDEV
               routes:
-              - to: ${local.netplan_tgw_subnet_private}
-                via: ${cidrhost(local.netplan_tgw_subnet_public,1)}
-                table: 102
+              - table: 102
+                to: ${module.mgmt_vpc.vpc_cidr_block}
+                via: ${cidrhost(module.mgmt_vpc.vpc_cidr_block, 1)}
+              routes:
+              - table: 102
+                to: ${module.staging_vpc.vpc_cidr_block}
+                via: ${cidrhost(module.staging_vpc.vpc_cidr_block, 1)}
               routing-policy:
-              - from: ${local.netplan_tgw_subnet_public}
-                table: 102
+              - table: 102
+                from: $SECONDARY_NETDEV_IP
       version: 2
   EOT
 
@@ -165,7 +170,7 @@ locals {
 
   mv /etc/netplan/50-cloud-init.yaml /etc/netplan/50-cloud-init.yaml.old
 
-  netplan apply
+  # netplan apply
 
   systemctl list-unit-files tailscaled.service > /dev/null
   if [ $? -eq 0 ]; then
