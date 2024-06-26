@@ -5,7 +5,7 @@ want to route Internet-bound traffic through. A use case for this is if you have
 that you want or need to use for all Internet-bound traffic such as restricting access to GitHub or Snowflake
 to a custom allow-list of IP addrresses.
 
-![diagram for aws-ec2-exit-node-custom-nat-routing](./assets/diagram-aws-ec2-exit-node-custom-nat-routing.png)
+![diagram for aws-ec2-autoscaling-dual-subnet](./assets/diagram-aws-ec2-autoscaling-dual-subnet.png)
 
 This module creates the following:
 
