@@ -132,37 +132,28 @@ locals {
   network:
       ethernets:
           $PRIMARY_NETDEV: # public interface
-              dhcp4: true
-              dhcp6: false
+              set-name: $PRIMARY_NETDEV
               match:
                   macaddress: $(cat /sys/class/net/$PRIMARY_NETDEV/address)
-              set-name: $PRIMARY_NETDEV
-              # routes:
-              # - table: 101
-              #   to: ${local.netplan_tgw_subnet_public}
-              #   via: ${cidrhost(local.netplan_tgw_subnet_public, 1)}
-              # routing-policy:
-              # - table: 101
-              #   from: ${local.netplan_tgw_subnet_public}
-          $SECONDARY_NETDEV: # private interface
-              dhcp4: true
-              dhcp4-overrides:
-                  route-metric: 100
               dhcp6: false
+              dhcp4: true
+              routes:
+              - to: default
+                via: ${cidrhost(local.netplan_tgw_subnet_public, 1)}
+          $SECONDARY_NETDEV: # private interface
+              set-name: $SECONDARY_NETDEV
               match:
                   macaddress: $(cat /sys/class/net/$SECONDARY_NETDEV/address)
-              set-name: $SECONDARY_NETDEV
+              dhcp6: false
+              dhcp4: true
+              dhcp4-overrides:
+                  route-metric: 50
+                  use-routes: false
               routes:
-              - table: 102
-                to: ${module.mgmt_vpc.vpc_cidr_block}
-                via: ${cidrhost(module.mgmt_vpc.vpc_cidr_block, 1)}
-              routes:
-              - table: 102
-                to: ${module.staging_vpc.vpc_cidr_block}
-                via: ${cidrhost(module.staging_vpc.vpc_cidr_block, 1)}
-              routing-policy:
-              - table: 102
-                from: $SECONDARY_NETDEV_IP
+              - to: ${module.mgmt_vpc.vpc_cidr_block}
+                via: ${cidrhost(module.prod_vpc.private_subnets_cidr_blocks[0], 1)}
+              - to: ${module.staging_vpc.vpc_cidr_block}
+                via: ${cidrhost(module.prod_vpc.private_subnets_cidr_blocks[0], 1)}
       version: 2
   EOT
 
@@ -170,7 +161,7 @@ locals {
 
   mv /etc/netplan/50-cloud-init.yaml /etc/netplan/50-cloud-init.yaml.old
 
-  # netplan apply
+  netplan apply
 
   systemctl list-unit-files tailscaled.service > /dev/null
   if [ $? -eq 0 ]; then
