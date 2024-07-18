@@ -16,6 +16,132 @@ provider "proxmox" {
     pm_parallel = 10
 }
 
+
+locals {
+    vm_name = "cloudinit-test-vm"
+    pve_node = "deepthought"
+    pve_storage = "local"
+}
+
+
+resource "proxmox_cloud_init_disk" "ci" {
+    name     = local.vm_name
+    pve_node = local.pve_node
+    storage  = local.pve_storage
+
+    meta_data = yamlencode({
+    instance_id    = sha1(local.vm_name)
+    local-hostname = local.vm_name
+    })
+
+    user_data = <<EOT
+    #cloud-config
+    users:
+        - zaphod
+    ssh_authorized_keys:
+        - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPA5Cpi+h5gyLs8JmKwTmSIytcyhRf/eusiabgj3tsH2
+    EOT
+#   user_data = yamlencode({
+#     hostname            = local.vm_name
+#     fqdn                = "${local.vm_name}"
+#     manage_etc_hosts    = true
+#     users               = ["default"]
+#     user                = local.cloudinit_user
+#     ssh_authorized_keys = [local.ssh_key]
+#     package_upgrade     = true
+#     chpasswd            = {
+#         expire = false
+#     }
+#   })
+#   network_config = yamlencode({
+#     version = 1
+#     config = [{
+#       type = "physical"
+#       name = "eth0"
+#       subnets = [{
+#         type    = "static"
+#         address = "192.168.5.100/24"
+#         gateway = local.local_ip_gateway
+#       }]
+#       },
+#       {
+#         type      = "nameserver"
+#         addresses = [local.local_dns_server_ip]
+#         search    = [local.local_domain]
+#       }
+#     ]
+#   })
+  vendor_data = ""
+}
+
+resource "proxmox_vm_qemu" "vm" {
+    name = local.vm_name
+    target_node = local.pve_node
+    clone = "ubuntu-cloud2404"
+    #storage = local.pve_storage
+
+    agent    = 1
+    cores    = 4
+    sockets  = 1
+    cpu      = "host"
+    memory   = 2048
+    scsihw   = "virtio-scsi-pci"
+    bootdisk = "virtio0;ide2"
+
+    #os_type  = "cloud-init"
+
+    #ciuser = "root"
+
+    disks {
+        ide {
+            ide2 {
+                cdrom {
+                    iso = "${proxmox_cloud_init_disk.ci.id}"
+                }
+            }
+        }
+        virtio {
+            virtio0 {
+                disk {
+                size            = 20
+                cache           = "writeback"
+                storage         = "local"
+                }
+            }
+        }
+    }
+  network {
+    model  = "virtio"
+    bridge = "vmbr0"
+  }
+
+  lifecycle {
+    ignore_changes = [
+      network,
+    ]
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # locals {
 #     vm_name = "cloudinit-test-vm"
 #     pve_node = "deepthought"
@@ -84,66 +210,66 @@ provider "proxmox" {
 #     ]
 #   }
 
-resource "proxmox_vm_qemu" "cloudinit-test" {
-    name = "terraform-test-vm"
-    desc = "A test for using terraform and cloudinit"
+# resource "proxmox_vm_qemu" "cloudinit-test" {
+#     name = "terraform-test-vm"
+#     desc = "A test for using terraform and cloudinit"
 
-    # Node name has to be the same name as within the cluster
-    # this might not include the FQDN
-    target_node = "deepthought"
+#     # Node name has to be the same name as within the cluster
+#     # this might not include the FQDN
+#     target_node = "deepthought"
 
-    # The destination resource pool for the new VM
-    #pool = "pool0"
+#     # The destination resource pool for the new VM
+#     #pool = "pool0"
 
-    # The template name to clone this vm from
-    clone = "ubuntu-cloud2404"
+#     # The template name to clone this vm from
+#     clone = "ubuntu-cloud2404"
 
-    # Activate QEMU agent for this VM
-    agent = 1
+#     # Activate QEMU agent for this VM
+#     agent = 1
 
-    os_type = "cloud-init"
-    cores = 2
-    sockets = 1
-    vcpus = 0
-    cpu = "host"
-    memory = 2048
-    #scsihw = "lsi"
+#     os_type = "cloud-init"
+#     cores = 2
+#     sockets = 1
+#     vcpus = 0
+#     cpu = "host"
+#     memory = 2048
+#     #scsihw = "lsi"
 
-    # Setup the disk
-    disks {
-        ide {
-            ide3 {
-                cloudinit {
-                    storage = "local"
-                }
-            }
-        }
-        virtio {
-            virtio0 {
-                disk {
-                    size            = 32
-                    cache           = "writeback"
-                    storage         = "local"
-                    iothread        = true
-                    discard         = true
-                }
-            }
-        }
-    }
+#     # Setup the disk
+#     disks {
+#         ide {
+#             ide3 {
+#                 cloudinit {
+#                     storage = "local"
+#                 }
+#             }
+#         }
+#         virtio {
+#             virtio0 {
+#                 disk {
+#                     size            = 32
+#                     cache           = "writeback"
+#                     storage         = "local"
+#                     iothread        = true
+#                     discard         = true
+#                 }
+#             }
+#         }
+#     }
 
-    # Setup the network interface and assign a vlan tag: 256
-    network {
-        model = "virtio"
-        bridge = "vmbr0"
-        #tag = 256
-    }
+#     # Setup the network interface and assign a vlan tag: 256
+#     network {
+#         model = "virtio"
+#         bridge = "vmbr0"
+#         #tag = 256
+#     }
 
-    # Setup the ip address using cloud-init.
-    boot = "order=virtio0"
-    # Keep in mind to use the CIDR notation for the ip.
-    #ipconfig0 = "ip=192.168.10.20/24,gw=192.168.10.1"
+#     # Setup the ip address using cloud-init.
+#     boot = "order=virtio0"
+#     # Keep in mind to use the CIDR notation for the ip.
+#     #ipconfig0 = "ip=192.168.10.20/24,gw=192.168.10.1"
 
-    sshkeys = <<EOF
-    ssh-rsa 9182739187293817293817293871== user@pc
-    EOF
-}
+#     sshkeys = <<EOF
+#     ssh-rsa 9182739187293817293817293871== user@pc
+#     EOF
+# }
