@@ -39,10 +39,11 @@ module "tailscale_aws_ec2" {
   instance_type = "t4g.micro"
   instance_tags = local.tags
 
-  subnet_id = module.vpc.public_subnets[0]
+  subnet_id = module.vpc.private_subnets[0]
   vpc_security_group_ids = [
     module.vpc.tailscale_security_group_id,
   ]
+  ipv6_address_count = 1
 
   # Variables for Tailscale resources
   tailscale_hostname = local.name
