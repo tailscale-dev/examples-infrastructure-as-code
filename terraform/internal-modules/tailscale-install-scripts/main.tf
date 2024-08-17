@@ -14,7 +14,6 @@ locals {
       ]),
 
       after_scripts = flatten([ # scripts to run AFTER tailscale install
-        module.tailscale-advertise-routes.routes_script,
         var.additional_after_scripts,
       ]),
     }
@@ -31,27 +30,10 @@ locals {
   tailscale_arguments = [
     "--authkey=${var.tailscale_auth_key}",
     "--hostname=${var.tailscale_hostname}",
-    var.tailscale_ssh == false ? "" : "--ssh",
-    var.tailscale_advertise_connector == false ? "" : "--advertise-connector",
-    var.tailscale_advertise_exit_node == false ? "" : "--advertise-exit-node",
-    // Don't set --advertise-routes here, use advertise_routes_script instead.
   ]
 
-  ip_forwarding_required = local.ip_forwarding_script != ""
-  ip_forwarding_script = (
-    var.tailscale_advertise_exit_node == false
-    && var.tailscale_advertise_connector == false
-    && length(var.tailscale_advertise_routes) == 0 ?
-    "" : templatefile("${path.module}/scripts/additional-scripts/ip-forwarding.tftpl", {})
-  )
+  ip_forwarding_required = length([for x in ["--advertise-exit-node", "--advertise-connector", "--advertise-routes"] : x if strcontains(x, "advertisfe")]) > 0
+  ip_forwarding_script   = local.ip_forwarding_required ? "" : templatefile("${path.module}/scripts/additional-scripts/ip-forwarding.tftpl", {})
 
   ethtool_udp_optimization_script = templatefile("${path.module}/scripts/additional-scripts/ethtool-udp.tftpl", {})
-}
-
-module "tailscale-advertise-routes" {
-  source                     = "../tailscale-advertise-routes"
-  tailscale_advertise_routes = var.tailscale_advertise_routes
-
-  tailscale_advertise_routes_from_file_on_host = "/root/tailscale-routes-to-advertise.txt"
-  tailscale_advertise_aws_service_names        = var.tailscale_advertise_aws_service_names
 }
