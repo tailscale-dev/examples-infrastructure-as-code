@@ -59,9 +59,9 @@ module "tailscale_aws_ec2_autoscaling" {
   tailscale_set_preferences = [
     "--auto-update",
     "--ssh",
+    "--advertise-connector",
+    "--advertise-exit-node",
     "--advertise-routes=${join(",", [module.vpc.vpc_cidr_block])}",
-    "--advertise-exit-node=true",
-    "--advertise-connector=true",
   ]
 
   depends_on = [

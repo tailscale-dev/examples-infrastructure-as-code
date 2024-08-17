@@ -51,12 +51,12 @@ module "tailscale_aws_ec2" {
   tailscale_set_preferences = [
     "--auto-update",
     "--ssh",
+    "--advertise-connector",
+    "--advertise-exit-node",
     "--advertise-routes=${join(",", [
       module.vpc.vpc_cidr_block,
       module.vpc.vpc_ipv6_cidr_block,
     ])}",
-    "--advertise-exit-node=true",
-    "--advertise-connector=true",
   ]
 
   depends_on = [

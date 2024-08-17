@@ -67,9 +67,9 @@ module "tailscale_azure_linux_virtual_machine" {
   tailscale_set_preferences = [
     "--auto-update",
     "--ssh",
+    "--advertise-connector",
+    "--advertise-exit-node",
     "--advertise-routes=${join(",", module.network.vnet_address_space)}",
-    "--advertise-exit-node=true",
-    "--advertise-connector=true",
   ]
 
   depends_on = [

@@ -60,9 +60,9 @@ module "tailscale_instance" {
   tailscale_set_preferences = [
     "--auto-update",
     "--ssh",
+    "--advertise-connector",
+    "--advertise-exit-node",
     "--advertise-routes=${join(",", module.vpc.subnets_ips)}",
-    "--advertise-exit-node=true",
-    "--advertise-connector=true",
   ]
 
   depends_on = [
