@@ -158,8 +158,8 @@ module "tailscale_aws_ec2_autoscaling" {
   tailscale_auth_key = tailscale_tailnet_key.main.key
   tailscale_set_preferences = [
     "--auto-update",
+    "-ssh",
   ]
-  tailscale_ssh = true
 
   #
   # Set up Tailscale Session Recorder (tsrecorder)

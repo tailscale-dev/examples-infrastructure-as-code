@@ -9,21 +9,6 @@ variable "tailscale_hostname" {
   description = "Hostname to assign to the device"
   type        = string
 }
-variable "tailscale_ssh" {
-  description = "Boolean flag to enable Tailscale SSH"
-  type        = bool
-  default     = true
-}
-variable "tailscale_advertise_exit_node" {
-  description = "Boolean flag to enable Tailscale Exit Node"
-  type        = bool
-  default     = false
-}
-variable "tailscale_advertise_connector" {
-  description = "Boolean flag to enable Tailscale App Connector"
-  type        = bool
-  default     = false
-}
 variable "tailscale_set_preferences" {
   description = "Preferences to run via `tailscale set ...`. Do not include `tailscale set`."
   type        = set(string)
@@ -41,19 +26,5 @@ variable "additional_before_scripts" {
 variable "additional_after_scripts" {
   description = "Additional scripts to run AFTER Tailscale scripts"
   type        = list(string)
-  default     = []
-}
-
-#
-# Variables for tailscale-advertise-routes
-#
-variable "tailscale_advertise_routes" {
-  description = "List of routes to advertise"
-  type        = set(string)
-  default     = []
-}
-variable "tailscale_advertise_aws_service_names" {
-  description = "List of AWS Services to retrieve IP prefixes for - e.g. ['GLOBALACCELERATOR','AMAZON']"
-  type        = set(string)
   default     = []
 }

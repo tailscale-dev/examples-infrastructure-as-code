@@ -66,13 +66,11 @@ module "tailscale_azure_linux_virtual_machine" {
   tailscale_auth_key = tailscale_tailnet_key.main.key
   tailscale_set_preferences = [
     "--auto-update",
+    "--ssh",
+    "--advertise-connector",
+    "--advertise-exit-node",
+    "--advertise-routes=${join(",", module.network.vnet_address_space)}",
   ]
-  tailscale_ssh                 = true
-  tailscale_advertise_exit_node = true
-
-  tailscale_advertise_routes = module.network.vnet_address_space
-
-  tailscale_advertise_connector = true
 
   depends_on = [
     module.network.natgw_ids, # for private subnets - ensure NAT gateway is available before instance provisioning

@@ -69,21 +69,13 @@ module "tailscale_aws_ec2_autoscaling" {
   tailscale_auth_key = tailscale_tailnet_key.main.key
   tailscale_set_preferences = [
     "--auto-update",
+    "--ssh",
+    "--advertise-connector",
+    "--advertise-exit-node",
+    "--advertise-routes=${join(",", [module.vpc.vpc_cidr_block])}",
   ]
-  tailscale_ssh                 = true
-  tailscale_advertise_exit_node = true
-
-  tailscale_advertise_routes = [
-    module.vpc.vpc_cidr_block,
-  ]
-
-  tailscale_advertise_connector = true
-  # tailscale_advertise_aws_service_names = [
-  #   "GLOBALACCELERATOR",
-  # ]
 
   depends_on = [
     module.vpc.natgw_ids, # ensure NAT gateway is available before instance provisioning - primarily for private subnets
   ]
 }
-
