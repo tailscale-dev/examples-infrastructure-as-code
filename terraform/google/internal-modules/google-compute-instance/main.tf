@@ -45,7 +45,7 @@ resource "google_compute_firewall" "tailscale_ingress_ipv6" {
 
 data "google_compute_image" "ubuntu" {
   project = "ubuntu-os-cloud"
-  family  = "ubuntu-2204-lts"
+  family  = "ubuntu-2404-lts-amd64"
 }
 
 resource "google_compute_instance" "tailscale_instance" {

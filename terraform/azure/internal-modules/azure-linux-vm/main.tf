@@ -23,7 +23,7 @@ resource "azurerm_network_interface" "primary" {
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = var.public_ip_address_id
   }
-  enable_ip_forwarding = module.tailscale_install_scripts.ip_forwarding_required
+  ip_forwarding_enabled = module.tailscale_install_scripts.ip_forwarding_required
 }
 
 resource "azurerm_network_interface_security_group_association" "tailscale" {
@@ -73,8 +73,8 @@ resource "azurerm_linux_virtual_machine" "tailscale_instance" {
 
   source_image_reference {
     publisher = "Canonical"
-    offer     = "0001-com-ubuntu-server-jammy"
-    sku       = "22_04-lts-gen2"
+    offer     = "ubuntu-24_04-lts"
+    sku       = "server"
     version   = "latest"
   }
 
