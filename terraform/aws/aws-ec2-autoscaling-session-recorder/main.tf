@@ -39,10 +39,10 @@ module "vpc" {
 }
 
 resource "aws_vpc_endpoint" "recorder" {
-  vpc_id       = local.vpc_id
-  service_name = "com.amazonaws.${aws_s3_bucket.recorder.region}.s3"
+  vpc_id          = local.vpc_id
+  service_name    = "com.amazonaws.${aws_s3_bucket.recorder.region}.s3"
   route_table_ids = local.vpc_endpoint_route_table_ids
-  tags = local.aws_tags
+  tags            = local.aws_tags
 }
 
 resource "aws_s3_bucket" "recorder" {
@@ -169,8 +169,8 @@ module "tailscale_aws_ec2_autoscaling" {
   network_interfaces = [aws_network_interface.primary.id]
 
   # Variables for Tailscale resources
-  tailscale_hostname = local.name
-  tailscale_auth_key = tailscale_tailnet_key.main.key
+  tailscale_hostname        = local.name
+  tailscale_auth_key        = tailscale_tailnet_key.main.key
   tailscale_set_preferences = local.tailscale_set_preferences
 
   #
