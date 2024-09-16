@@ -53,7 +53,7 @@ resource "tailscale_tailnet_key" "main" {
 module "tailscale_aws_ec2" {
   source = "../internal-modules/aws-ec2-instance"
 
-  instance_type = "t4g.micro"
+  instance_type = local.instance_type
   instance_tags = local.aws_tags
 
   subnet_id              = local.subnet_id
