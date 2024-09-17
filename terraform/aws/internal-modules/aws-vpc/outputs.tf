@@ -25,9 +25,9 @@ output "nat_public_ips" {
   value = module.vpc.nat_public_ips
 }
 
-output "natgw_ids" {
+output "nat_ids" {
   description = "Useful for using within `depends_on` for other resources"
-  value       = module.vpc.natgw_ids
+  value       = module.vpc.nat_ids
 }
 
 output "public_route_table_ids" {

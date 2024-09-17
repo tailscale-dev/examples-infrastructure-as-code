@@ -25,9 +25,9 @@ locals {
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
 
-  vpc_cidr_block            = module.network.vnet_address_space
-  vpc_id                    = module.network.vnet_id
-  subnet_id                 = module.network.public_subnet_id
+  vpc_cidr_block            = module.vpc.vnet_address_space
+  vpc_id                    = module.vpc.vnet_id
+  subnet_id                 = module.vpc.public_subnet_id
   network_security_group_id = azurerm_network_security_group.tailscale_ingress.id
   instance_type             = "Standard_DS1_v2"
   admin_public_key_path     = var.admin_public_key_path
@@ -38,7 +38,7 @@ resource "azurerm_resource_group" "main" {
   name     = local.name
 }
 
-module "network" {
+module "vpc" {
   source = "../internal-modules/azure-network"
 
   name = local.name
@@ -90,7 +90,7 @@ module "tailscale_azure_linux_virtual_machine" {
   tailscale_set_preferences = local.tailscale_set_preferences
 
   depends_on = [
-    module.network.natgw_ids, # for private subnets - ensure NAT gateway is available before instance provisioning
+    module.vpc.nat_ids, # remove if using your own VPC otherwise ensure provisioned NAT gateway is available
   ]
 }
 

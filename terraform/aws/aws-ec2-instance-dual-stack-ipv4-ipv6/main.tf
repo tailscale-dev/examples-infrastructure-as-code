@@ -68,7 +68,7 @@ module "tailscale_aws_ec2" {
   tailscale_set_preferences = local.tailscale_set_preferences
 
   depends_on = [
-    module.vpc.natgw_ids, # remove if using your own VPC otherwise ensure provisioned NAT gateway is available
+    module.vpc.nat_ids, # remove if using your own VPC otherwise ensure provisioned NAT gateway is available
   ]
 }
 

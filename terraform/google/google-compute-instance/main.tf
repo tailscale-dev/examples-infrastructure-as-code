@@ -78,7 +78,7 @@ module "tailscale_instance" {
   tailscale_set_preferences = local.tailscale_set_preferences
 
   depends_on = [
-    module.vpc.nat_ids, # ensure NAT gateway is available before instance provisioning - primarily for private subnets
+    module.vpc.nat_ids, # remove if using your own VPC otherwise ensure provisioned NAT gateway is available
   ]
 }
 
