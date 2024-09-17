@@ -30,10 +30,6 @@ output "natgw_ids" {
   value       = module.vpc.natgw_ids
 }
 
-output "tailscale_security_group_id" {
-  value = aws_security_group.tailscale.id
-}
-
 output "public_route_table_ids" {
   value = module.vpc.public_route_table_ids
 }
