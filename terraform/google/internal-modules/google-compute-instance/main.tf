@@ -13,36 +13,6 @@ data "google_compute_subnetwork" "selected" {
   self_link = "https://www.googleapis.com/compute/v1/${var.subnet}" # requires full URL - https://github.com/hashicorp/terraform-provider-google/issues/9919
 }
 
-resource "google_compute_firewall" "tailscale_ingress_ipv4" {
-  name    = "tailscale-ingress-ipv4"
-  network = data.google_compute_subnetwork.selected.network
-
-  allow {
-    protocol = "udp"
-    ports    = ["41641"]
-  }
-
-  source_ranges = [
-    "0.0.0.0/0",
-  ]
-  target_tags = var.instance_tags
-}
-
-resource "google_compute_firewall" "tailscale_ingress_ipv6" {
-  name    = "tailscale-ingress-ipv6"
-  network = data.google_compute_subnetwork.selected.network
-
-  allow {
-    protocol = "udp"
-    ports    = ["41641"]
-  }
-
-  source_ranges = [
-    "::/0",
-  ]
-  target_tags = var.instance_tags
-}
-
 data "google_compute_image" "ubuntu" {
   project = "ubuntu-os-cloud"
   family  = "ubuntu-2404-lts-amd64"
