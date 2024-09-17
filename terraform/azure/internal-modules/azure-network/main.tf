@@ -1,4 +1,4 @@
-module "network" {
+module "vpc" {
   # https://registry.terraform.io/modules/Azure/network/azurerm/latest
   source  = "Azure/network/azurerm"
   version = ">= 5.0, < 6.0"
@@ -37,28 +37,28 @@ module "network" {
 data "azurerm_subnet" "public" {
   resource_group_name = var.resource_group_name
 
-  virtual_network_name = module.network.vnet_name
+  virtual_network_name = module.vpc.vnet_name
   name                 = var.subnet_name_public
 
-  depends_on = [module.network.vnet_subnets]
+  depends_on = [module.vpc.vnet_subnets]
 }
 
 data "azurerm_subnet" "private" {
   resource_group_name = var.resource_group_name
 
-  virtual_network_name = module.network.vnet_name
+  virtual_network_name = module.vpc.vnet_name
   name                 = var.subnet_name_private
 
-  depends_on = [module.network.vnet_subnets]
+  depends_on = [module.vpc.vnet_subnets]
 }
 
 data "azurerm_subnet" "dns-inbound" {
   resource_group_name = var.resource_group_name
 
-  virtual_network_name = module.network.vnet_name
+  virtual_network_name = module.vpc.vnet_name
   name                 = var.subnet_name_private_dns_resolver
 
-  depends_on = [module.network.vnet_subnets]
+  depends_on = [module.vpc.vnet_subnets]
 }
 #
 # Private DNS resolver resources
@@ -70,7 +70,7 @@ resource "azurerm_private_dns_resolver" "main" {
   name = var.name
   tags = var.tags
 
-  virtual_network_id = module.network.vnet_id
+  virtual_network_id = module.vpc.vnet_id
 }
 
 resource "azurerm_private_dns_resolver_inbound_endpoint" "main" {

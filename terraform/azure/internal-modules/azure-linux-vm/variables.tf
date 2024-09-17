@@ -25,6 +25,10 @@ variable "primary_subnet_id" {
   description = "The primary subnet (typically PUBLIC) to assign to the virtual machine"
   type        = string
 }
+variable "network_security_group_id" {
+  description = "The network security group to assign to the virtual machine"
+  type        = string
+}
 variable "machine_size" {
   description = "The machine size to assign the virtual machine"
   type        = string

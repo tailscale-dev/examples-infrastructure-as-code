@@ -1,14 +1,14 @@
 output "vnet_id" {
-  value = module.network.vnet_id
+  value = module.vpc.vnet_id
 }
 output "vnet_name" {
-  value = module.network.vnet_name
+  value = module.vpc.vnet_name
 }
 output "vnet_address_space" {
-  value = module.network.vnet_address_space
+  value = module.vpc.vnet_address_space
 }
 output "vnet_subnets" {
-  value = module.network.vnet_subnets
+  value = module.vpc.vnet_subnets
 }
 
 output "public_subnet_id" {
@@ -40,7 +40,7 @@ output "nat_public_ips" {
   value = azurerm_public_ip.nat.*.ip_address
 }
 
-output "natgw_ids" {
+output "nat_ids" {
   description = "Useful for using within `depends_on` for other resources"
   value       = azurerm_nat_gateway.nat.*.id
 }
