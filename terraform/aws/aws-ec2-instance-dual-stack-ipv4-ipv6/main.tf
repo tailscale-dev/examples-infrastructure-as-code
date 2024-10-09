@@ -26,7 +26,7 @@ locals {
   vpc_id             = module.vpc.vpc_id
   subnet_id          = module.vpc.public_subnets[0]
   security_group_ids = [aws_security_group.tailscale.id]
-  instance_type      = "t4g.micro"
+  instance_type      = "c7g.medium"
 }
 
 // Remove this to use your own VPC.
