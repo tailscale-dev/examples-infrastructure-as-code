@@ -3,7 +3,7 @@
 # Installs tailscale, runs `tailscale up`, and runs additional scripts if provided
 #
 
-exec &>> /root/tailscale-cloud-init-user-data.log
+exec > >(tee /var/log/tailscale-user-data.log|logger -t tailscale-user-data -s 2>/dev/console) 2>&1
 
 %{ for s in before_scripts }
 ${s}
