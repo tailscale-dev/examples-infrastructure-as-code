@@ -29,3 +29,5 @@ echo -e '\n#\n# Complete.\n#\n'
 %{ for s in after_scripts }
 ${s}
 %{ endfor }
+
+tailscale status --peers=false 2>&1 1> /dev/null && echo -e '\n#\n# Tailscale status: connected\n#\n' || echo -e '\n#\n# Tailscale status: NOT connected\n#\n'
