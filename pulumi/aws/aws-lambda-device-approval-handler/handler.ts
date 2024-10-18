@@ -2,7 +2,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 
 export async function lambdaHandler(ev: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
     // TODO: https://tailscale.com/kb/1213/webhooks#verifying-an-event-signature
-    // console.log(`Received event: ${JSON.stringify(ev)}`); // TODO: add verbose logging flag?
+    // console.log(`Received event: ${JSON.stringify(ev)}`);
 
     let processedCount = 0;
     let ignoredCount = 0;
@@ -10,7 +10,7 @@ export async function lambdaHandler(ev: APIGatewayProxyEvent): Promise<APIGatewa
     try {
         let decodedBody = ev.body;
         if (ev.isBase64Encoded) {
-            decodedBody = Buffer.from(ev.body!, 'base64').toString('utf8');
+            decodedBody = Buffer.from(ev.body!, "base64").toString("utf8");
         }
         const tailnetEvents: TailnetEvent[] = JSON.parse(decodedBody!);
         const results: ProcessingResult[] = [];
@@ -56,7 +56,6 @@ function generateResponseBody(statusCode: number, ev: APIGatewayProxyEvent, proc
         statusCode: statusCode,
         body: JSON.stringify({
             message: (statusCode == 200 ? "ok" : "An error occurred."),
-            // requestId: ev.requestContext.requestId, // TODO: This requestId doesn't match what's in the lambda logs.
             eventResults: {
                 processed: processedCount,
                 errored: erroredCount,
@@ -103,11 +102,11 @@ async function nodeNeedsApprovalHandler(event: TailnetEvent): Promise<Processing
             ["windows", "macos", "linux"].includes(attributesResponseJson["attributes"]["node:os"])
             && attributesResponseJson["attributes"]["node:tsReleaseTrack"] == "stable"
         ) {
-            // approve device
-            await approveDevice(eventData);
+            // authorize device
+            await authorizeDevice(eventData);
         }
         else {
-            console.log(`NOT approving device [${eventData.nodeID}:${eventData.deviceName}] with attributes [${JSON.stringify(attributesResponseJson)}]`);
+            console.log(`NOT authorizing device [${eventData.nodeID}:${eventData.deviceName}] with attributes [${JSON.stringify(attributesResponseJson)}]`);
         }
 
         return { event: event, result: "SUCCESS", } as ProcessingResult;
@@ -120,7 +119,7 @@ export const ENV_TAILSCALE_OAUTH_CLIENT_ID = "OAUTH_CLIENT_ID";
 export const ENV_TAILSCALE_OAUTH_CLIENT_SECRET = "OAUTH_CLIENT_SECRET";
 const TAILSCALE_CONTROL_URL = "https://login.tailscale.com";
 
-// https://github.com/tailscale/tailscale/blob/main/publicapi/device.md#get-device-posture-attributes
+// https://tailscale.com/api#tag/devices/GET/device/{deviceId}/attributes
 async function getDeviceAttributes(event: TailnetEventDeviceData): Promise<Response> {
     console.log(`Getting device attributes [${event.nodeID}]`);
     const data = await makeAuthenticatedRequest("GET", `${TAILSCALE_CONTROL_URL}/api/v2/device/${event.nodeID}/attributes`);
@@ -130,7 +129,7 @@ async function getDeviceAttributes(event: TailnetEventDeviceData): Promise<Respo
     return data;
 }
 
-// https://github.com/tailscale/tailscale/blob/main/publicapi/device.md#get-device
+// https://tailscale.com/api#tag/devices/GET/device/{deviceId}
 async function getDevice(event: TailnetEventDeviceData): Promise<Response> {
     console.log(`Getting device [${event.nodeID}]`);
     const data = await makeAuthenticatedRequest("GET", `${TAILSCALE_CONTROL_URL}/api/v2/device/${event.nodeID}`);
@@ -140,12 +139,12 @@ async function getDevice(event: TailnetEventDeviceData): Promise<Response> {
     return data;
 }
 
-// https://github.com/tailscale/tailscale/blob/main/publicapi/device.md#authorize-device
-async function approveDevice(device: TailnetEventDeviceData) {
-    console.log(`Approving device [${device.nodeID}:${device.deviceName}]`);
+// https://tailscale.com/api#tag/devices/POST/device/{deviceId}/authorized
+async function authorizeDevice(device: TailnetEventDeviceData) {
+    console.log(`Authorizing device [${device.nodeID}:${device.deviceName}]`);
     const data = await makeAuthenticatedRequest("POST", `${TAILSCALE_CONTROL_URL}/api/v2/device/${device.nodeID}/authorized`, JSON.stringify({ "authorized": true }));
     if (!data.ok) {
-        throw new Error(`Failed to approve device [${device.nodeID}:${device.deviceName}]`);
+        throw new Error(`Failed to authorize device [${device.nodeID}:${device.deviceName}]`);
     }
 }
 
@@ -185,7 +184,7 @@ const makeAuthenticatedRequest = async function (method: "GET" | "POST", url: st
 }
 
 async function httpsRequest(url: string, options: any): Promise<Response> {
-    // console.log(`Making HTTP request to [${url}] with options [${JSON.stringify(options)}]`); // TODO: add verbose logging flag?
+    // console.log(`Making HTTP request to [${url}] with options [${JSON.stringify(options)}]`);
     return await fetch(url, options);
 }
 

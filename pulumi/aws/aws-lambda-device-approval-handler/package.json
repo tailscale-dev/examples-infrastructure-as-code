@@ -6,9 +6,9 @@
         "typescript": "^5.0.0"
     },
     "dependencies": {
-        "@pulumi/aws": "^6.0.0",
-        "@pulumi/aws-apigateway": "^2.5.0",
-        "@pulumi/pulumi": "^3.113.0",
+        "@pulumi/aws": "^6.56.1",
+        "@pulumi/aws-apigateway": "^2.6.1",
+        "@pulumi/pulumi": "^3.137.0",
         "@types/aws-lambda": "^8.10.140",
         "aws-lambda": "^1.0.7"
     }
