@@ -1,0 +1,15 @@
+{
+    "name": "tailscale-lambda-device-approval-handler",
+    "main": "index.ts",
+    "devDependencies": {
+        "@types/node": "^18",
+        "typescript": "^5.0.0"
+    },
+    "dependencies": {
+        "@pulumi/aws": "^6.56.1",
+        "@pulumi/aws-apigateway": "^2.6.1",
+        "@pulumi/pulumi": "^3.137.0",
+        "@types/aws-lambda": "^8.10.140",
+        "aws-lambda": "^1.0.7"
+    }
+}
