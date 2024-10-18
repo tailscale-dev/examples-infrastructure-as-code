@@ -7,7 +7,7 @@ This example creates the following:
 
 ## To use
 
-Follow the documentation to configure the Terraform providers:
+Follow the documentation to configure the Pulumi providers:
 
 - [AWS](https://www.pulumi.com/registry/packages/aws/installation-configuration/)
 

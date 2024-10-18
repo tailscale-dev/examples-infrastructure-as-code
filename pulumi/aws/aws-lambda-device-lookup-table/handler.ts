@@ -17,8 +17,8 @@ export async function lambdaHandler(ev: APIGatewayProxyEvent): Promise<APIGatewa
         for (const event of tailnetEvents) {
             try {
                 switch (event.type) { // https://tailscale.com/kb/1213/webhooks#events
-                    case "nodeNeedsApproval":
-                        results.push(await nodeNeedsApprovalHandler(event));
+                    case "nodeCreated":
+                        results.push(await nodeCreatedHandler(event));
                         break;
                     default:
                         results.push(await unhandledHandler(event));
@@ -72,42 +72,19 @@ async function unhandledHandler(event: TailnetEvent): Promise<ProcessingResult> 
     return { event: event, result: "IGNORED", } as ProcessingResult;
 }
 
-async function nodeNeedsApprovalHandler(event: TailnetEvent): Promise<ProcessingResult> {
+async function nodeCreatedHandler(event: TailnetEvent): Promise<ProcessingResult> {
     try {
         console.log(`Handling event type [${event.type}]`);
 
         const eventData = event.data as TailnetEventDeviceData;
 
-        // get device details and attributes
-        const deviceResponse = await getDevice(eventData);
-        if (!deviceResponse.ok) {
-            throw new Error(`Failed to get device [${eventData.nodeID}]`);
+        const devicesResponse = await listTailnetDevices(eventData);
+        if (!devicesResponse.ok) {
+            throw new Error(`Failed to list tailnet devices, response status [${devicesResponse.status}]`);
         }
 
-        const attributesResponse = await getDeviceAttributes(eventData);
-        if (!attributesResponse.ok) {
-            throw new Error(`Failed to get device attributes [${eventData.nodeID}]`);
-        }
-
-        // inspect device details
-        const deviceResponseJson = await deviceResponse.json();
-        console.log(`Device response [${JSON.stringify(deviceResponseJson)}]`);
-        const attributesResponseJson = await attributesResponse.json();
-        console.log(`Device attributes response [${JSON.stringify(attributesResponseJson)}]`);
-
-        /**
-         * Customize approval logic here.
-         */
-        if (
-            ["windows", "macos", "linux"].includes(attributesResponseJson["attributes"]["node:os"])
-            && attributesResponseJson["attributes"]["node:tsReleaseTrack"] == "stable"
-        ) {
-            // authorize device
-            await authorizeDevice(eventData);
-        }
-        else {
-            console.log(`NOT authorizing device [${eventData.nodeID}:${eventData.deviceName}] with attributes [${JSON.stringify(attributesResponseJson)}]`);
-        }
+        const deviceCSV = generateDeviceCSV(devicesResponse);
+        console.log(`Devices CSV:\n${deviceCSV}`); // TODO: persist to SIEM or Logging service
 
         return { event: event, result: "SUCCESS", } as ProcessingResult;
     } catch (err: any) {
@@ -119,33 +96,29 @@ export const ENV_TAILSCALE_OAUTH_CLIENT_ID = "OAUTH_CLIENT_ID";
 export const ENV_TAILSCALE_OAUTH_CLIENT_SECRET = "OAUTH_CLIENT_SECRET";
 const TAILSCALE_CONTROL_URL = "https://login.tailscale.com";
 
-// https://tailscale.com/api#tag/devices/GET/device/{deviceId}/attributes
-async function getDeviceAttributes(event: TailnetEventDeviceData): Promise<Response> {
-    console.log(`Getting device attributes [${event.nodeID}]`);
-    const data = await makeAuthenticatedRequest("GET", `${TAILSCALE_CONTROL_URL}/api/v2/device/${event.nodeID}/attributes`);
-    if (!data.ok) {
-        throw new Error(`Failed to get device [${event.nodeID}]`);
-    }
-    return data;
+function parseTailnet(domain: string): string | null {
+    const regex = /^[^.]+\.(.+\.ts\.net)$/;
+    const match = domain.match(regex);
+    return match ? match[1] : null;
 }
 
-// https://tailscale.com/api#tag/devices/GET/device/{deviceId}
-async function getDevice(event: TailnetEventDeviceData): Promise<Response> {
-    console.log(`Getting device [${event.nodeID}]`);
-    const data = await makeAuthenticatedRequest("GET", `${TAILSCALE_CONTROL_URL}/api/v2/device/${event.nodeID}`);
-    if (!data.ok) {
-        throw new Error(`Failed to get device [${event.nodeID}]`);
-    }
-    return data;
+async function generateDeviceCSV(devicesResponse: Response): Promise<string> {
+    const devicesResponseJson = await devicesResponse.json();
+
+    let devicesCsv = "";
+    devicesResponseJson["devices"].forEach((device: any) => {
+        devicesCsv += `${device.nodeId},${device.name},${device.user || device.tags}\n`;
+    });
+
+    return devicesCsv
 }
 
-// https://tailscale.com/api#tag/devices/POST/device/{deviceId}/authorized
-async function authorizeDevice(device: TailnetEventDeviceData) {
-    console.log(`Authorizing device [${device.nodeID}:${device.deviceName}]`);
-    const data = await makeAuthenticatedRequest("POST", `${TAILSCALE_CONTROL_URL}/api/v2/device/${device.nodeID}/authorized`, JSON.stringify({ "authorized": true }));
-    if (!data.ok) {
-        throw new Error(`Failed to authorize device [${device.nodeID}:${device.deviceName}]`);
-    }
+// https://tailscale.com/api#tag/devices/GET/tailnet/{tailnet}/devices
+async function listTailnetDevices(event: TailnetEventDeviceData): Promise<Response> {
+    const tailnet = parseTailnet(event.deviceName);
+    console.log(`List tailnet devices for [${tailnet}]`);
+    const data = await makeAuthenticatedRequest("GET", `${TAILSCALE_CONTROL_URL}/api/v2/tailnet/${tailnet}/devices`);
+    return data;
 }
 
 // https://tailscale.com/kb/1215/oauth-clients

@@ -9,7 +9,7 @@ const name = `example-${path.basename(process.cwd())}`;
 const pulumiConfig = new pulumi.Config();
 
 const api = new apigateway.RestAPI(name, {
-    stageName: "tailscale-device-approval",
+    stageName: `${name}`,
     binaryMediaTypes: ["application/json"],
     routes: [
         {

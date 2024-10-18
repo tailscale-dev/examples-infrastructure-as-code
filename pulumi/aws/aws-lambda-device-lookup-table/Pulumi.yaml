@@ -1,0 +1,7 @@
+name: aws-lambda-device-lookup-table
+runtime: nodejs
+description: Example of handling a Tailscale nodeCreated Webhook to generate a csv of device ids and names
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: aws-typescript
