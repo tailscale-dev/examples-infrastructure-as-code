@@ -23,7 +23,6 @@ resource "azurerm_network_interface" "primary" {
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = var.public_ip_address_id
   }
-  ip_forwarding_enabled = module.tailscale_install_scripts.ip_forwarding_required
 }
 
 resource "azurerm_network_interface_security_group_association" "tailscale" {

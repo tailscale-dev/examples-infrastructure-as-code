@@ -37,7 +37,6 @@ resource "aws_instance" "tailscale_instance" {
   subnet_id              = var.subnet_id
   vpc_security_group_ids = var.vpc_security_group_ids
   ipv6_address_count     = var.ipv6_address_count
-  source_dest_check      = !module.tailscale_install_scripts.ip_forwarding_required
 
   iam_instance_profile = var.instance_profile_name
 

@@ -6,10 +6,6 @@ output "ubuntu_install_script_base64_encoded" {
   value = base64encode(local.ubuntu_install_script)
 }
 
-output "ip_forwarding_required" {
-  value = local.ip_forwarding_required
-}
-
 output "ubuntu_install_script_md5" {
   description = "MD5 hash of the VM user_data script - for detecting changes"
   value       = md5(local.ubuntu_install_script)
