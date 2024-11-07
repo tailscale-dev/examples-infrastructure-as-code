@@ -68,8 +68,6 @@ resource "aws_network_interface" "secondary" {
   subnet_id       = local.private_subnet_id
   security_groups = local.security_group_ids
   tags            = merge(local.aws_tags, { Name = "${local.name}-secondary" })
-
-  source_dest_check = false
 }
 
 module "tailscale_aws_ec2_autoscaling" {

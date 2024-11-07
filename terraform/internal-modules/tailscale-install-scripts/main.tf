@@ -32,8 +32,8 @@ locals {
     "--hostname=${var.tailscale_hostname}",
   ]
 
-  ip_forwarding_required = length([for x in ["--advertise-exit-node", "--advertise-connector", "--advertise-routes"] : x if strcontains(x, "advertisfe")]) > 0
-  ip_forwarding_script   = local.ip_forwarding_required ? "" : templatefile("${path.module}/scripts/additional-scripts/ip-forwarding.tftpl", {})
+  ip_forwarding_required = length([for x in var.tailscale_set_preferences : x if strcontains(x, "advertise")]) > 0
+  ip_forwarding_script   = local.ip_forwarding_required == false ? "" : templatefile("${path.module}/scripts/additional-scripts/ip-forwarding.tftpl", {})
 
   ethtool_udp_optimization_script = templatefile("${path.module}/scripts/additional-scripts/ethtool-udp.tftpl", {})
 }

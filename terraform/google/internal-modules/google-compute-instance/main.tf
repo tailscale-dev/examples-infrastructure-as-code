@@ -40,5 +40,4 @@ resource "google_compute_instance" "tailscale_instance" {
   tags     = var.instance_tags
 
   metadata_startup_script = module.tailscale_install_scripts.ubuntu_install_script
-  can_ip_forward          = module.tailscale_install_scripts.ip_forwarding_required
 }
