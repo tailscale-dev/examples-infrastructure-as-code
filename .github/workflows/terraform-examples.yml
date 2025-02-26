@@ -20,7 +20,7 @@ jobs:
 
       - name: Check Terraform formatting
         run: |
-          bash terraform/internal-scripts/check-terraform-fmt.sh terraform
+          bash terraform/repo-scripts/check-terraform-fmt.sh terraform
 
   check-terraform-variables-tailscale-install-scripts:
     runs-on: ubuntu-latest
@@ -37,4 +37,4 @@ jobs:
 
       - name: Check variables-tailscale-install-scripts.tf files
         run: |
-          bash terraform/internal-scripts/check-variables-tailscale-install-scripts.sh terraform
+          bash terraform/repo-scripts/check-variables-tailscale-install-scripts.sh terraform

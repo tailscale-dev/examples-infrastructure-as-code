@@ -2,8 +2,8 @@ default: help
 
 .PHONY: fix-terraform-examples
 fix-terraform-examples: ## Fix examples-for-customers/terraform 
-	./internal-scripts/fix-terraform-fmt.sh
-	./internal-scripts/fix-variables-tailscale-install-scripts.sh
+	./repo-scripts/fix-terraform-fmt.sh
+	./repo-scripts/fix-variables-tailscale-install-scripts.sh
 
 .PHONY: help
 help: ## Display this information. Default target.
