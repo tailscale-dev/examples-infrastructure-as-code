@@ -1,0 +1,3 @@
+variable "public_key" {
+
+}
