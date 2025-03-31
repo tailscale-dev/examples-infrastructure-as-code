@@ -1,0 +1,244 @@
+name: Provider Version Update
+
+on:
+  schedule:
+    - cron: '0 0 * * 1'  # Run weekly on Mondays
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  terraform-provider-update:
+    name: Check and Update Terraform Providers
+    runs-on: ubuntu-latest
+    outputs:
+      updates_available: ${{ steps.set-outputs.outputs.updates_available }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: latest
+
+      - name: Initialize Terraform modules
+        run: |
+          find terraform -type d -name ".terraform" -prune -o -name "*.tf" -exec dirname {} \; | sort -u | while read dir; do
+            echo "Initializing Terraform in $dir"
+            cd "$GITHUB_WORKSPACE/$dir"
+            if [ -f *.tf ]; then
+              terraform init -backend=false
+            fi
+          done
+
+      - name: Check for provider updates
+        id: tf-provider-check
+        run: |
+          echo "UPDATES_AVAILABLE=false" >> $GITHUB_ENV
+          find terraform -type d -name ".terraform" -prune -o -name "*.tf" -exec dirname {} \; | sort -u | while read dir; do
+            echo "Checking providers in $dir"
+            cd "$GITHUB_WORKSPACE/$dir"
+            if [ -f *.tf ]; then
+              terraform init -backend=false
+              if terraform providers | grep -E "Available|updates"; then
+                echo "UPDATES_AVAILABLE=true" >> $GITHUB_ENV
+                echo "Updates available in $dir" >> terraform_updates.txt
+              fi
+            fi
+          done
+      
+      - name: Set outputs
+        id: set-outputs
+        run: echo "updates_available=${{ env.UPDATES_AVAILABLE }}" >> $GITHUB_OUTPUT
+
+      - name: Create PR for Terraform provider updates
+        if: env.UPDATES_AVAILABLE == 'true'
+        run: |
+          # Set up Git user
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          
+          # Create a new branch
+          DATE=$(date +"%Y%m%d")
+          BRANCH_NAME="terraform-provider-update-$DATE"
+          git checkout -b $BRANCH_NAME
+          
+          # Update providers in each directory with updates
+          while read line; do
+            dir=$(echo $line | awk '{print $4}')
+            cd "$GITHUB_WORKSPACE/$dir"
+            terraform init -upgrade -backend=false
+          done < terraform_updates.txt
+          
+          # Commit changes if any
+          if git diff --quiet; then
+            echo "No changes detected after provider upgrade"
+            exit 0
+          else
+            git add -A
+            git commit -m "Update Terraform provider versions"
+            git push --set-upstream origin $BRANCH_NAME
+            
+            # Create PR using GitHub CLI
+            gh pr create --title "Update Terraform provider versions" \
+              --body "This PR updates Terraform provider versions to the latest available versions." \
+              --base main \
+              --head $BRANCH_NAME
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  pulumi-provider-update:
+    name: Check and Update Pulumi Providers
+    runs-on: ubuntu-latest
+    outputs:
+      updates_available: ${{ steps.set-outputs.outputs.updates_available }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Pulumi
+        run: |
+          curl -fsSL https://get.pulumi.com | sh
+          echo "$HOME/.pulumi/bin" >> $GITHUB_PATH
+
+      - name: Check Pulumi projects
+        id: pulumi-check
+        run: |
+          echo "UPDATES_AVAILABLE=false" >> $GITHUB_ENV
+          PULUMI_DIRS=$(find pulumi -name "Pulumi.yaml" -exec dirname {} \;)
+          
+          for dir in $PULUMI_DIRS; do
+            echo "Checking Pulumi project in $dir"
+            cd "$GITHUB_WORKSPACE/$dir"
+            
+            # Detect language and install dependencies
+            if [ -f "package.json" ]; then
+              npm install
+            elif [ -f "requirements.txt" ]; then
+              pip install -r requirements.txt
+            elif [ -f "go.mod" ]; then
+              go mod download
+            fi
+            
+            # Check for provider updates
+            if pulumi plugin ls | grep -q "Update available"; then
+              echo "UPDATES_AVAILABLE=true" >> $GITHUB_ENV
+              echo "Updates available in $dir" >> pulumi_updates.txt
+            fi
+          done
+      
+      - name: Set outputs
+        id: set-outputs
+        run: echo "updates_available=${{ env.UPDATES_AVAILABLE }}" >> $GITHUB_OUTPUT
+
+      - name: Create PR for Pulumi provider updates
+        if: env.UPDATES_AVAILABLE == 'true'
+        run: |
+          # Set up Git user
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          
+          # Create a new branch
+          DATE=$(date +"%Y%m%d")
+          BRANCH_NAME="pulumi-provider-update-$DATE"
+          git checkout -b $BRANCH_NAME
+          
+          # Update providers in each directory with updates
+          while read line; do
+            dir=$(echo $line | awk '{print $4}')
+            cd "$GITHUB_WORKSPACE/$dir"
+            pulumi plugin update --all
+            
+            # Update lockfiles or dependency files based on language
+            if [ -f "package.json" ]; then
+              npm update
+            elif [ -f "requirements.txt" ]; then
+              pip install -U -r requirements.txt
+              pip freeze > requirements.txt
+            elif [ -f "go.mod" ]; then
+              go get -u ./...
+              go mod tidy
+            fi
+          done < pulumi_updates.txt
+          
+          # Commit changes if any
+          if git diff --quiet; then
+            echo "No changes detected after provider upgrade"
+            exit 0
+          else
+            git add -A
+            git commit -m "Update Pulumi provider versions"
+            git push --set-upstream origin $BRANCH_NAME
+            
+            # Create PR using GitHub CLI
+            gh pr create --title "Update Pulumi provider versions" \
+              --body "This PR updates Pulumi provider versions to the latest available versions." \
+              --base main \
+              --head $BRANCH_NAME
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Combined test job that runs after provider updates are proposed
+  test-updated-providers:
+    name: Test Updated Providers
+    runs-on: ubuntu-latest
+    needs: [terraform-provider-update, pulumi-provider-update]
+    if: success() && (needs.terraform-provider-update.outputs.updates_available == 'true' || needs.pulumi-provider-update.outputs.updates_available == 'true')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: latest
+
+      - name: Test Terraform modules
+        run: |
+          find terraform -type d -name ".terraform" -prune -o -name "*.tf" -exec dirname {} \; | sort -u | while read dir; do
+            echo "Testing Terraform in $dir"
+            cd "$GITHUB_WORKSPACE/$dir"
+            if [ -f *.tf ]; then
+              terraform init -backend=false
+              terraform validate
+            fi
+          done
+
+      - name: Setup Pulumi
+        run: |
+          curl -fsSL https://get.pulumi.com | sh
+          echo "$HOME/.pulumi/bin" >> $GITHUB_PATH
+
+      - name: Test Pulumi projects
+        run: |
+          PULUMI_DIRS=$(find pulumi -name "Pulumi.yaml" -exec dirname {} \;)
+          
+          for dir in $PULUMI_DIRS; do
+            echo "Testing Pulumi project in $dir"
+            cd "$GITHUB_WORKSPACE/$dir"
+            
+            # Detect language and install dependencies
+            if [ -f "package.json" ]; then
+              npm install
+            elif [ -f "requirements.txt" ]; then
+              pip install -r requirements.txt
+            elif [ -f "go.mod" ]; then
+              go mod download
+            fi
+            
+            # Preview changes (without updating state)
+            pulumi preview --non-interactive
+          done 
