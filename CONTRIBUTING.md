@@ -23,7 +23,7 @@ The examples in this repository:
 - Use up-to-date versions of providers, modules, and third-party libraries and avoid deprecated features or arguments of providers, modules, etc.
 - Put all customizable options, such as VPC CIDR blocks, common resource tags, etc., in common variables:
     - In Terraform, use [local values](https://developer.hashicorp.com/terraform/language/values/locals) - e.g. a single `locals { }` block at the top of `main.tf`.
-    - In other languages use idiomatic coding practices appropriate to the language - e.g. in TypeScript use (const declarations)[https://www.typescriptlang.org/docs/handbook/variable-declarations.html#const-declarations] in as few blocks as possible.
+    - In other languages use idiomatic coding practices appropriate to the language - e.g. in TypeScript use [const declarations](https://www.typescriptlang.org/docs/handbook/variable-declarations.html#const-declarations) in as few blocks as possible.
 - Prefix all provisioned resource names with `"example-${basename(path.cwd)}"`, ideally using a local variable for the prefix.
 - Tag all resources with a `Name` tag matching the resource name (e.g. `"example-${basename(path.cwd)}"`).
 - Use community modules for undifferentiated heavy lifting, such as cloud VPCs or virtual networks. When possible, make these modules easy to remove without requiring lots of changes throughout the rest of the example.
