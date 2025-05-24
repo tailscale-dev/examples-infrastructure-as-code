@@ -21,6 +21,13 @@ data "aws_subnet" "selected" {
   id    = data.aws_network_interface.selected[count.index].subnet_id
 }
 
+# Calculate the maximum number of instances based on network interfaces
+# Assumes pairs of interfaces (public + private per instance)
+locals {
+  interfaces_per_instance = var.interfaces_per_instance
+  max_instances = length(var.network_interfaces) / local.interfaces_per_instance
+}
+
 data "aws_ami" "ubuntu" {
   owners      = ["099720109477"] # Canonical
   most_recent = true
@@ -41,8 +48,12 @@ data "aws_ami" "ubuntu" {
   }
 }
 
+# Create separate launch templates for each instance index
+# This allows each instance to get its specific ENI pair
 resource "aws_launch_template" "tailscale" {
-  name_prefix   = var.autoscaling_group_name
+  count = local.max_instances
+  
+  name_prefix   = "${var.autoscaling_group_name}-${count.index + 1}"
   image_id      = data.aws_ami.ubuntu.id
   instance_type = var.instance_type
   key_name      = var.instance_key_name
@@ -59,19 +70,21 @@ resource "aws_launch_template" "tailscale" {
     http_tokens   = var.instance_metadata_options["http_tokens"]
   }
 
+  # Assign specific ENI pair to this launch template
   dynamic "network_interfaces" {
-    # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/scenarios-enis.html#creating-dual-homed-instances-with-workloads-roles-on-distinct-subnets
-    for_each = var.network_interfaces
+    for_each = range(local.interfaces_per_instance)
     content {
       delete_on_termination = false
-      device_index          = network_interfaces.key
-      network_interface_id  = network_interfaces.value
+      device_index          = network_interfaces.value
+      network_interface_id  = var.network_interfaces[count.index * local.interfaces_per_instance + network_interfaces.value]
     }
   }
 
   tag_specifications {
     resource_type = "instance"
-    tags          = var.instance_tags
+    tags          = merge(var.instance_tags, {
+      Name = "${var.autoscaling_group_name}-${count.index + 1}"
+    })
   }
 
   user_data = module.tailscale_install_scripts.ubuntu_install_script_base64_encoded
@@ -83,36 +96,42 @@ resource "aws_launch_template" "tailscale" {
   }
 }
 
+# Create individual ASGs for each instance to ensure proper ENI assignment
 resource "aws_autoscaling_group" "tailscale" {
-  name = var.autoscaling_group_name
+  count = local.max_instances
+  
+  name = "${var.autoscaling_group_name}-${count.index + 1}"
 
   launch_template {
-    id      = aws_launch_template.tailscale.id
-    version = aws_launch_template.tailscale.latest_version
+    id      = aws_launch_template.tailscale[count.index].id
+    version = aws_launch_template.tailscale[count.index].latest_version
   }
 
-  availability_zones = [data.aws_network_interface.selected[0].availability_zone]
+  availability_zones = [data.aws_network_interface.selected[count.index * local.interfaces_per_instance].availability_zone]
 
-  desired_capacity = 1
+  desired_capacity = count.index < var.desired_capacity ? 1 : 0
   min_size         = 0
-  max_size         = 1
-
-  /**
-   * Uncomment to allow ASG to replace the instance. It will take several minutes as the ASG 
-   * will try to launch a replacement instance before ENIs have been released.
-
-  instance_refresh {
-    strategy = "Rolling"
-    preferences {
-      min_healthy_percentage = 0
-    }
-  }
-  */
+  max_size         = 1  # Each ASG manages exactly one instance
 
   health_check_grace_period = 300
   health_check_type         = "EC2"
 
   timeouts {
     delete = "15m"
+  }
+
+  tag {
+    key                 = "Name"
+    value               = "${var.autoscaling_group_name}-${count.index + 1}"
+    propagate_at_launch = true
+  }
+
+  dynamic "tag" {
+    for_each = var.instance_tags
+    content {
+      key                 = tag.key
+      value               = tag.value
+      propagate_at_launch = true
+    }
   }
 }

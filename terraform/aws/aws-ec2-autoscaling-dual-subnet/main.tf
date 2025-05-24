@@ -1,6 +1,9 @@
 locals {
   name = "example-${basename(path.cwd)}"
 
+  # Add scaling configuration
+  max_instances = var.max_instances
+
   aws_tags = {
     Name = local.name
   }
@@ -27,7 +30,7 @@ locals {
   subnet_id          = module.vpc.public_subnets[0]
   private_subnet_id  = module.vpc.private_subnets[0]
   security_group_ids = [aws_security_group.tailscale.id]
-  instance_type      = "c7g.medium"
+  instance_type      = var.instance_type
 }
 
 // Remove this to use your own VPC.
@@ -51,23 +54,47 @@ resource "tailscale_tailnet_key" "main" {
   tags                = local.tailscale_acl_tags
 }
 
+# Create multiple ENI pairs for scaling
 resource "aws_network_interface" "primary" {
+  count           = local.max_instances
   subnet_id       = local.subnet_id
   security_groups = local.security_group_ids
-  tags            = merge(local.aws_tags, { Name = "${local.name}-primary" })
+  tags            = merge(local.aws_tags, { 
+    Name = "${local.name}-primary-${count.index + 1}" 
+  })
 }
+
 resource "aws_eip" "primary" {
-  tags = local.aws_tags
+  count = local.max_instances
+  tags  = merge(local.aws_tags, { 
+    Name = "${local.name}-eip-${count.index + 1}" 
+  })
 }
+
 resource "aws_eip_association" "primary" {
-  network_interface_id = aws_network_interface.primary.id
-  allocation_id        = aws_eip.primary.id
+  count                = local.max_instances
+  network_interface_id = aws_network_interface.primary[count.index].id
+  allocation_id        = aws_eip.primary[count.index].id
 }
 
 resource "aws_network_interface" "secondary" {
+  count           = local.max_instances
   subnet_id       = local.private_subnet_id
   security_groups = local.security_group_ids
-  tags            = merge(local.aws_tags, { Name = "${local.name}-secondary" })
+  tags            = merge(local.aws_tags, { 
+    Name = "${local.name}-secondary-${count.index + 1}" 
+  })
+}
+
+# Flatten the network interfaces for the ASG module
+locals {
+  # Create pairs: [primary-1, secondary-1, primary-2, secondary-2, ...]
+  network_interface_pairs = flatten([
+    for i in range(local.max_instances) : [
+      aws_network_interface.primary[i].id,
+      aws_network_interface.secondary[i].id
+    ]
+  ])
 }
 
 module "tailscale_aws_ec2_autoscaling" {
@@ -77,10 +104,8 @@ module "tailscale_aws_ec2_autoscaling" {
   instance_type          = local.instance_type
   instance_tags          = local.aws_tags
 
-  network_interfaces = [
-    aws_network_interface.primary.id, # first NIC must be in PUBLIC subnet
-    aws_network_interface.secondary.id,
-  ]
+  network_interfaces = local.network_interface_pairs
+  desired_capacity   = var.desired_capacity
 
   # Variables for Tailscale resources
   tailscale_hostname        = local.name

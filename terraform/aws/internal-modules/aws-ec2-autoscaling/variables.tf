@@ -2,8 +2,18 @@
 # Variables for autoscaling resources
 #
 variable "network_interfaces" {
-  description = "List of network interfaces to attach to instances - if attaching multiple for dual subnet routing, the first NIC must be the primary in the PUBLIC subnet"
+  description = "List of network interfaces to attach to instances - if attaching multiple for dual subnet routing, the first NIC must be the primary in the PUBLIC subnet. Should be in pairs: [public-1, private-1, public-2, private-2, ...]"
   type        = list(string)
+}
+variable "interfaces_per_instance" {
+  description = "Number of network interfaces per instance (typically 2 for dual-homed)"
+  type        = number
+  default     = 2
+}
+variable "desired_capacity" {
+  description = "Number of instances to run"
+  type        = number
+  default     = 1
 }
 variable "autoscaling_group_name" {
   type = string
