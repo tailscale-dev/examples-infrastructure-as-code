@@ -40,4 +40,9 @@ variable "instance_type" {
   description = "EC2 instance type"
   type        = string
   default     = "c7g.medium"
+}
+
+variable "tailscale_acl_tags" {
+  description = "List of Tailscale ACL tags to assign to instances for access control and policy enforcement. Tags must be prefixed with 'tag:' (e.g., ['tag:exitnode', 'tag:subnetrouter'])"
+  type        = list(string)
 } 

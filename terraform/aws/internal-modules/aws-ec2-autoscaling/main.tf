@@ -8,17 +8,22 @@ module "tailscale_install_scripts" {
   additional_before_scripts = var.additional_before_scripts
   additional_after_scripts  = var.additional_after_scripts
 
-  primary_subnet_cidr   = data.aws_subnet.selected[0].cidr_block
-  secondary_subnet_cidr = try(data.aws_subnet.selected[1].cidr_block, null) # only available if using dual subnets
+  primary_subnet_cidr   = data.aws_subnet.primary.cidr_block
+  secondary_subnet_cidr = data.aws_subnet.secondary.cidr_block
 }
 
 data "aws_network_interface" "selected" {
   count = length(var.network_interfaces)
   id    = var.network_interfaces[count.index]
 }
-data "aws_subnet" "selected" {
-  count = length(var.network_interfaces)
-  id    = data.aws_network_interface.selected[count.index].subnet_id
+
+# Only get the unique subnets (primary and secondary)
+data "aws_subnet" "primary" {
+  id = data.aws_network_interface.selected[0].subnet_id  # First ENI is always primary (public)
+}
+
+data "aws_subnet" "secondary" {
+  id = data.aws_network_interface.selected[1].subnet_id  # Second ENI is always secondary (private)
 }
 
 # Calculate the maximum number of instances based on network interfaces
@@ -107,7 +112,8 @@ resource "aws_autoscaling_group" "tailscale" {
     version = aws_launch_template.tailscale[count.index].latest_version
   }
 
-  availability_zones = [data.aws_network_interface.selected[count.index * local.interfaces_per_instance].availability_zone]
+  # Use the primary subnet's AZ since all ENIs for an instance must be in the same AZ
+  availability_zones = [data.aws_subnet.primary.availability_zone]
 
   desired_capacity = count.index < var.desired_capacity ? 1 : 0
   min_size         = 0

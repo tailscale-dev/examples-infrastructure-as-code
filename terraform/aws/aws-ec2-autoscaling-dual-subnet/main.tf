@@ -8,12 +8,7 @@ locals {
     Name = local.name
   }
 
-  tailscale_acl_tags = [
-    "tag:example-infra",
-    "tag:example-exitnode",
-    "tag:example-subnetrouter",
-    "tag:example-appconnector",
-  ]
+  tailscale_acl_tags = var.tailscale_acl_tags
   tailscale_set_preferences = [
     "--auto-update",
     "--ssh",
