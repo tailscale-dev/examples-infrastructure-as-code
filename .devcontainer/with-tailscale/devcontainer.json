@@ -2,5 +2,8 @@
   "name": "Codespace with Tailscale",
   "features": {
     "ghcr.io/tailscale/codespace/tailscale": {}
+  },
+  "remoteEnv": {
+    "MY_VAR": "foo-bar"
   }
 }
