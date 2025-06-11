@@ -1,9 +1,10 @@
 {
   "name": "Codespace with Tailscale",
   "features": {
-    "ghcr.io/tailscale/codespace/tailscale": {}
+    "github.com/clstokes/codespace/tailscale?ref=clstokes/extra-args": {}
   },
   "remoteEnv": {
-    "MY_VAR": "foo-bar"
+    "MY_VAR": "foo-bar",
+    "TS_EXTRA_ARGS": "--accept-dns"
   }
 }
