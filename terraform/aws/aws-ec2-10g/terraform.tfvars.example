@@ -1,0 +1,13 @@
+#
+# Copy this file to terraform.tfvars and populate with your actual values
+#
+
+# AWS Configuration
+aws_region        = "us-east-1"  # Change to your preferred AWS region
+aws_region_2      = "us-west-2"  # Second region for the second EC2 instance
+aws_key_pair_name = "your-key-pair-name"  # Name of your AWS key pair for SSH access
+
+# Tailscale OAuth Configuration
+tailscale_oauth_client_id     = "YOUR_OAUTH_CLIENT_ID"        # OAuth client ID from Tailscale
+tailscale_oauth_client_secret = "YOUR_OAUTH_CLIENT_SECRET"    # OAuth client secret from Tailscale
+tailscale_tailnet            = "your-tailnet.ts.net"         # Your tailnet name (e.g., example.ts.net) 

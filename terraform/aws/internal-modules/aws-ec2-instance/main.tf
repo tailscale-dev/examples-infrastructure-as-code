@@ -25,7 +25,7 @@ data "aws_ami" "ubuntu" {
 
   filter {
     name   = "architecture"
-    values = ["arm64"]
+    values = [var.instance_architecture]
   }
 }
 

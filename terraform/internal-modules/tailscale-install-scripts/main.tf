@@ -8,6 +8,7 @@ locals {
 
       before_scripts = flatten([ # scripts to run BEFORE tailscale install
         var.additional_before_scripts,
+        local.network_wait_script,
         local.ip_forwarding_script,
         local.netplan_dual_subnet_script,
         local.ethtool_udp_optimization_script, # run after netplan script
@@ -18,6 +19,8 @@ locals {
       ]),
     }
   )
+
+  network_wait_script = templatefile("${path.module}/scripts/additional-scripts/wait-for-network.tftpl", {})
 
   netplan_dual_subnet_script = var.secondary_subnet_cidr == null ? "" : templatefile(
     "${path.module}/scripts/additional-scripts/netplan-dual-subnet.tftpl",

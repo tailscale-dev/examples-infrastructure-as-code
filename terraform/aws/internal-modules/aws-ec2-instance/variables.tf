@@ -14,6 +14,11 @@ variable "vpc_security_group_ids" {
 variable "instance_type" {
   type = string
 }
+variable "instance_architecture" {
+  description = "Architecture of the EC2 instance (arm64 or x86_64)"
+  type        = string
+  default     = "arm64"
+}
 variable "instance_tags" {
   type = map(string)
 }

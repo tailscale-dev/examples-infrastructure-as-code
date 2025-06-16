@@ -1,0 +1,68 @@
+#
+# Wait for network connectivity before proceeding
+#
+
+echo -e '\n#\n# Waiting for network connectivity...\n#\n'
+
+# Function to test network connectivity
+test_connectivity() {
+    # Test multiple methods to ensure network is ready
+    local test_urls=(
+        "https://pkgs.tailscale.com"
+        "https://dl.tailscale.com" 
+        "https://google.com"
+        "1.1.1.1"
+    )
+    
+    for url in "$${test_urls[@]}"; do
+        if curl -s --connect-timeout 5 --max-time 10 "$${url}" >/dev/null 2>&1; then
+            echo "Network connectivity confirmed via $${url}"
+            return 0
+        fi
+    done
+    return 1
+}
+
+# Wait for network with exponential backoff
+max_attempts=30
+attempt=1
+wait_time=2
+
+while [ $${attempt} -le $${max_attempts} ]; do
+    echo "Network connectivity test attempt $${attempt} of $${max_attempts}..."
+    
+    if test_connectivity; then
+        echo "Network is ready!"
+        break
+    fi
+    
+    if [ $${attempt} -eq $${max_attempts} ]; then
+        echo "WARNING: Network connectivity timeout after $${max_attempts} attempts"
+        echo "Proceeding anyway, but installation may fail..."
+        break
+    fi
+    
+    echo "Network not ready, waiting $${wait_time} seconds..."
+    sleep $${wait_time}
+    
+    # Exponential backoff with max of 30 seconds
+    wait_time=$${((wait_time * 2))}
+    if [ $${wait_time} -gt 30 ]; then
+        wait_time=30
+    fi
+    
+    attempt=$${((attempt + 1))}
+done
+
+# Also wait for DNS resolution
+echo "Testing DNS resolution..."
+for i in {1..10}; do
+    if nslookup pkgs.tailscale.com >/dev/null 2>&1; then
+        echo "DNS resolution working"
+        break
+    fi
+    echo "DNS not ready, waiting 3 seconds... (attempt $${i}/10)"
+    sleep 3
+done
+
+echo -e '\n#\n# Network connectivity check complete.\n#\n' 
