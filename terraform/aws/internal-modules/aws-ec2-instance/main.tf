@@ -34,6 +34,9 @@ resource "aws_instance" "tailscale_instance" {
   instance_type = var.instance_type
   key_name      = var.instance_key_name
 
+  source_dest_check = false
+  associate_public_ip_address = true
+
   subnet_id              = var.subnet_id
   vpc_security_group_ids = var.vpc_security_group_ids
   ipv6_address_count     = var.ipv6_address_count
