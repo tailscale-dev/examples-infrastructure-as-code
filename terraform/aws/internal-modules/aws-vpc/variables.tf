@@ -21,14 +21,17 @@ variable "azs" {
 variable "cidr" {
   description = "IPv4 CIDR block for the VPC"
   type        = string
+  default     = ""
 }
 variable "public_subnets" {
   description = "List of public subnet CIDR blocks"
   type        = list(string)
+  default     = []
 }
 variable "private_subnets" {
   description = "List of private subnet CIDR blocks"
   type        = list(string)
+  default     = []
 }
 variable "enable_ipv6" {
   description = "Conditional to provision IPV6 VPC resources too"
