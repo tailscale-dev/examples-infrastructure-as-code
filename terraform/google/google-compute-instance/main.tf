@@ -38,19 +38,6 @@ module "vpc" {
   region     = local.region
 
   name = local.name
-
-  subnets = [
-    {
-      subnet_name   = "subnet-${local.region}-10-0-121"
-      subnet_ip     = "10.0.121.0/24"
-      subnet_region = local.region
-    },
-    {
-      subnet_name   = "subnet-${local.region}-10-0-122"
-      subnet_ip     = "10.0.122.0/24"
-      subnet_region = local.region
-    }
-  ]
 }
 
 resource "tailscale_tailnet_key" "main" {

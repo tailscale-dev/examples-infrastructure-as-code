@@ -25,4 +25,5 @@ variable "subnets" {
       subnet_region = string
     }
   ))
+  default = []
 }
