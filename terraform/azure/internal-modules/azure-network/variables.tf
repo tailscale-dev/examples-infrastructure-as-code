@@ -24,10 +24,12 @@ variable "tags" {
 variable "cidrs" {
   description = "IPv4 CIDR block for the VPC"
   type        = list(string)
+  default     = []
 }
 variable "subnet_cidrs" {
   description = "List of CIDR blocks"
   type        = list(string)
+  default     = []
 }
 variable "subnet_name_public" {
   description = "Name of the `public` subnet"

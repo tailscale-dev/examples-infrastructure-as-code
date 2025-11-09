@@ -29,7 +29,7 @@ locals {
   vpc_id                    = module.vpc.vnet_id
   subnet_id                 = module.vpc.public_subnet_id
   network_security_group_id = azurerm_network_security_group.tailscale_ingress.id
-  instance_type             = "Standard_DS1_v2"
+  instance_type             = "Standard_D2as_v6"
   admin_public_key_path     = var.admin_public_key_path
 }
 
@@ -47,12 +47,6 @@ module "vpc" {
   location            = local.location
   resource_group_name = local.resource_group_name
 
-  cidrs = ["10.0.0.0/22"]
-  subnet_cidrs = [
-    "10.0.0.0/24",
-    "10.0.1.0/24",
-    "10.0.2.0/24",
-  ]
   subnet_name_public               = "public"
   subnet_name_private              = "private"
   subnet_name_private_dns_resolver = "dns-inbound"

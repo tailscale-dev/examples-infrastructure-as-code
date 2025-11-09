@@ -36,11 +36,6 @@ module "vpc" {
   name = local.name
   tags = local.aws_tags
 
-  cidr = "10.0.80.0/22"
-
-  public_subnets  = ["10.0.80.0/24"]
-  private_subnets = ["10.0.81.0/24"]
-
   enable_ipv6 = true
 }
 

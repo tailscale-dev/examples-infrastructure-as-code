@@ -2,6 +2,10 @@ output "vpc_id" {
   value = module.vpc.vnet_id
 }
 
+output "vpc_cidrs" {
+  value = module.vpc.vnet_address_space
+}
+
 output "nat_public_ips" {
   value = module.vpc.nat_public_ips
 }
