@@ -1,3 +1,16 @@
+locals {
+  cidrs        = length(var.cidrs) == 0 ? [cidrsubnet("10.0.0.0/16", 6, random_integer.vpc_cidr[0].result)] : var.cidrs                                                    # /22
+  subnet_cidrs = length(var.subnet_cidrs) == 0 ? [cidrsubnet(local.cidrs[0], 2, 0), cidrsubnet(local.cidrs[0], 2, 1), cidrsubnet(local.cidrs[0], 2, 2)] : var.subnet_cidrs # /24 inside the /22
+}
+
+# Pick a random /22 within 10.0.0.0/16
+resource "random_integer" "vpc_cidr" {
+  count = length(var.cidrs) == 0 ? 1 : 0
+
+  min = 0
+  max = 63 # 2^(22-16)-1 = 64 slices in a /16
+}
+
 module "vpc" {
   # https://registry.terraform.io/modules/Azure/network/azurerm/latest
   source  = "Azure/network/azurerm"
@@ -9,8 +22,8 @@ module "vpc" {
   vnet_name = var.name
   tags      = var.tags
 
-  address_spaces  = var.cidrs
-  subnet_prefixes = var.subnet_cidrs
+  address_spaces  = local.cidrs
+  subnet_prefixes = local.subnet_cidrs
   subnet_names = [
     var.subnet_name_public,
     var.subnet_name_private,
