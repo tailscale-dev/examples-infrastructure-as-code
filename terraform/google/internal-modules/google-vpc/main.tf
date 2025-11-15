@@ -26,7 +26,7 @@ resource "random_integer" "vpc_cidr" {
 module "vpc" {
   # https://registry.terraform.io/modules/terraform-google-modules/network/google/latest
   source  = "terraform-google-modules/network/google"
-  version = ">= 7.0, < 8.0"
+  version = ">= 13.0, < 14.0"
 
   project_id   = var.project_id
   network_name = var.name
@@ -37,10 +37,10 @@ module "vpc" {
 module "cloud_router" {
   # https://registry.terraform.io/modules/terraform-google-modules/cloud-router/google/latest
   source  = "terraform-google-modules/cloud-router/google"
-  version = ">= 6.0, < 7.0"
+  version = ">= 8.0, < 9.0"
 
-  project = var.project_id
-  region  = var.region
+  project_id = var.project_id
+  region     = var.region
 
   name    = var.name
   network = module.vpc.network_name
