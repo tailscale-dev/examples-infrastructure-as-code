@@ -19,7 +19,7 @@ resource "azurerm_network_interface" "primary" {
   internal_dns_name_label = "${var.machine_name}-primary"
   ip_configuration {
     subnet_id                     = var.primary_subnet_id
-    name                          = "internal"
+    name                          = "primary"
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = var.public_ip_address_id
   }

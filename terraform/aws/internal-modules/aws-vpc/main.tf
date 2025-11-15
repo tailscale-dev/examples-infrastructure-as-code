@@ -15,7 +15,7 @@ resource "random_integer" "vpc_cidr" {
 module "vpc" {
   # https://github.com/terraform-aws-modules/terraform-aws-vpc
   source  = "terraform-aws-modules/vpc/aws"
-  version = ">= 5.0, < 6.0"
+  version = ">= 6.0, < 7.0"
 
   name = var.name
   tags = var.tags
@@ -37,8 +37,8 @@ module "vpc" {
   # ipv6
   enable_ipv6                                   = var.enable_ipv6
   public_subnet_assign_ipv6_address_on_creation = var.enable_ipv6
-  public_subnet_ipv6_prefixes                   = range(0, length(var.public_subnets))
-  private_subnet_ipv6_prefixes                  = range(10, 10 + length(var.private_subnets))
+  public_subnet_ipv6_prefixes                   = range(0, length(local.public_subnet_cidr))
+  private_subnet_ipv6_prefixes                  = range(10, 10 + length(local.private_subnet_cidr))
 }
 
 data "aws_availability_zones" "available" {

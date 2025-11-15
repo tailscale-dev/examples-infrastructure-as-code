@@ -1,3 +1,7 @@
+output "resource_name_prefix" {
+  value = local.name
+}
+
 output "vpc_id" {
   value = module.vpc.vpc_id
 }

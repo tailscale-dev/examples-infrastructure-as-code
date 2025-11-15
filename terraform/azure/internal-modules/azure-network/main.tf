@@ -12,27 +12,33 @@ resource "random_integer" "vpc_cidr" {
 }
 
 module "vpc" {
-  # https://registry.terraform.io/modules/Azure/network/azurerm/latest
-  source  = "Azure/network/azurerm"
-  version = ">= 5.0, < 6.0"
+  # https://registry.terraform.io/modules/Azure/avm-res-network-virtualnetwork/azurerm/latest
+  source  = "Azure/avm-res-network-virtualnetwork/azurerm"
+  version = ">= 0.16, < 1.0"
 
-  resource_group_location = var.location
-  resource_group_name     = var.resource_group_name
+  location  = var.location
+  parent_id = var.resource_group_id
 
-  vnet_name = var.name
-  tags      = var.tags
+  name = var.name
+  tags = var.tags
 
-  address_spaces  = local.cidrs
-  subnet_prefixes = local.subnet_cidrs
-  subnet_names = [
-    var.subnet_name_public,
-    var.subnet_name_private,
-    var.subnet_name_private_dns_resolver,
-  ]
-
-  subnet_delegation = {
-    "${var.subnet_name_private_dns_resolver}" = [
-      {
+  address_space = local.cidrs
+  subnets = {
+    "public" = {
+      name             = var.subnet_name_public
+      address_prefixes = [local.subnet_cidrs[0]]
+    }
+    "private" = {
+      name             = var.subnet_name_private
+      address_prefixes = [local.subnet_cidrs[1]]
+      nat_gateway = {
+        id = azurerm_nat_gateway.nat.id
+      }
+    }
+    "dns-inbound" = {
+      name             = var.subnet_name_private_dns_resolver
+      address_prefixes = [local.subnet_cidrs[2]]
+      delegations = [{
         name = "Microsoft.Network/dnsResolvers"
         service_delegation = {
           name = "Microsoft.Network/dnsResolvers"
@@ -40,17 +46,15 @@ module "vpc" {
             "Microsoft.Network/virtualNetworks/subnets/join/action",
           ]
         }
-      }
-    ]
+      }]
+    }
   }
-
-  use_for_each = true # https://github.com/Azure/terraform-azurerm-network#notice-to-contributor
 }
 
 data "azurerm_subnet" "public" {
   resource_group_name = var.resource_group_name
 
-  virtual_network_name = module.vpc.vnet_name
+  virtual_network_name = module.vpc.name
   name                 = var.subnet_name_public
 
   depends_on = [module.vpc.vnet_subnets]
@@ -59,7 +63,7 @@ data "azurerm_subnet" "public" {
 data "azurerm_subnet" "private" {
   resource_group_name = var.resource_group_name
 
-  virtual_network_name = module.vpc.vnet_name
+  virtual_network_name = module.vpc.name
   name                 = var.subnet_name_private
 
   depends_on = [module.vpc.vnet_subnets]
@@ -68,7 +72,7 @@ data "azurerm_subnet" "private" {
 data "azurerm_subnet" "dns-inbound" {
   resource_group_name = var.resource_group_name
 
-  virtual_network_name = module.vpc.vnet_name
+  virtual_network_name = module.vpc.name
   name                 = var.subnet_name_private_dns_resolver
 
   depends_on = [module.vpc.vnet_subnets]
@@ -83,7 +87,7 @@ resource "azurerm_private_dns_resolver" "main" {
   name = var.name
   tags = var.tags
 
-  virtual_network_id = module.vpc.vnet_id
+  virtual_network_id = module.vpc.resource_id
 }
 
 resource "azurerm_private_dns_resolver_inbound_endpoint" "main" {
@@ -107,23 +111,30 @@ resource "azurerm_nat_gateway" "nat" {
   location            = var.location
   resource_group_name = var.resource_group_name
 
-  name                    = var.name
+  name = var.name
+  tags = var.tags
+
   sku_name                = "Standard"
   idle_timeout_in_minutes = 10
+  zones                   = []
+
 }
 
-resource "azurerm_subnet_nat_gateway_association" "nat" {
-  nat_gateway_id = azurerm_nat_gateway.nat.id
-  subnet_id      = data.azurerm_subnet.private.id
-}
+# resource "azurerm_subnet_nat_gateway_association" "nat" {
+#   nat_gateway_id = azurerm_nat_gateway.nat.id
+#   subnet_id      = data.azurerm_subnet.private.id
+# }
 
 resource "azurerm_public_ip" "nat" {
   location            = var.location
   resource_group_name = var.resource_group_name
 
-  name              = "${var.name}-nat"
+  name = "${var.name}-nat"
+  tags = var.tags
+
   sku               = "Standard"
   allocation_method = "Static"
+  zones             = []
 }
 
 resource "azurerm_nat_gateway_public_ip_association" "nat" {
