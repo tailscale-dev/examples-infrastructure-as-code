@@ -1,14 +1,14 @@
 output "vnet_id" {
-  value = module.vpc.vnet_id
+  value = module.vpc.resource_id
 }
 output "vnet_name" {
-  value = module.vpc.vnet_name
+  value = module.vpc.name
 }
 output "vnet_address_space" {
-  value = module.vpc.vnet_address_space
+  value = module.vpc.address_spaces
 }
 output "vnet_subnets" {
-  value = module.vpc.vnet_subnets
+  value = module.vpc.subnets
 }
 
 output "public_subnet_id" {

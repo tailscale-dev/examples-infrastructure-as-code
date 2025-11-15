@@ -1,6 +1,10 @@
 #
 # Variables for all resources
 #
+variable "resource_group_id" {
+  description = "ID of Resource Group for all resources"
+  type        = string
+}
 variable "resource_group_name" {
   description = "Name of Resource Group for all resources"
   type        = string

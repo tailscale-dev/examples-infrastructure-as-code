@@ -17,11 +17,12 @@ locals {
     "--advertise-connector",
     "--advertise-exit-node",
     "--advertise-routes=${join(",", coalescelist(
-      local.vpc_cidr_block,
+      tolist(local.vpc_cidr_block),
     ))}",
   ]
 
   // Modify these to use your own VPC
+  resource_group_id   = azurerm_resource_group.main.id
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
 
@@ -45,6 +46,7 @@ module "vpc" {
   tags = local.azure_tags
 
   location            = local.location
+  resource_group_id   = local.resource_group_id
   resource_group_name = local.resource_group_name
 
   subnet_name_public               = "public"
@@ -63,6 +65,18 @@ resource "tailscale_tailnet_key" "main" {
   tags                = local.tailscale_acl_tags
 }
 
+resource "azurerm_public_ip" "vm" {
+  location            = local.location
+  resource_group_name = local.resource_group_name
+
+  name = "${local.resource_group_name}-vm"
+  tags = local.azure_tags
+
+  sku               = "Standard"
+  allocation_method = "Static"
+  zones             = []
+}
+
 module "tailscale_azure_linux_virtual_machine" {
   source = "../internal-modules/azure-linux-vm"
 
@@ -72,6 +86,7 @@ module "tailscale_azure_linux_virtual_machine" {
   # public subnet
   primary_subnet_id         = local.subnet_id
   network_security_group_id = local.network_security_group_id
+  public_ip_address_id      = azurerm_public_ip.vm.id
 
   machine_name          = local.name
   machine_size          = local.instance_type
