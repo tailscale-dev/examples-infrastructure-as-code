@@ -7,18 +7,6 @@ module "tailscale_install_scripts" {
 
   additional_before_scripts = var.additional_before_scripts
   additional_after_scripts  = var.additional_after_scripts
-
-  primary_subnet_cidr   = data.aws_subnet.selected[0].cidr_block
-  secondary_subnet_cidr = try(data.aws_subnet.selected[1].cidr_block, null) # only available if using dual subnets
-}
-
-data "aws_network_interface" "selected" {
-  count = length(var.network_interfaces)
-  id    = var.network_interfaces[count.index]
-}
-data "aws_subnet" "selected" {
-  count = length(var.network_interfaces)
-  id    = data.aws_network_interface.selected[count.index].subnet_id
 }
 
 data "aws_ami" "ubuntu" {
@@ -47,6 +35,12 @@ resource "aws_launch_template" "tailscale" {
   instance_type = var.instance_type
   key_name      = var.instance_key_name
 
+  network_interfaces {
+    # associate_public_ip_address = true # TODO(clstokes): remove
+    subnet_id       = var.subnet_id
+    security_groups = var.security_group_ids
+  }
+
   dynamic "iam_instance_profile" {
     for_each = var.instance_profile_name != "" ? [1] : []
     content {
@@ -59,15 +53,16 @@ resource "aws_launch_template" "tailscale" {
     http_tokens   = var.instance_metadata_options["http_tokens"]
   }
 
-  dynamic "network_interfaces" {
-    # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/scenarios-enis.html#creating-dual-homed-instances-with-workloads-roles-on-distinct-subnets
-    for_each = var.network_interfaces
-    content {
-      delete_on_termination = false
-      device_index          = network_interfaces.key
-      network_interface_id  = network_interfaces.value
-    }
-  }
+  # TODO(clstokes): remove
+  #   dynamic "network_interfaces" {
+  #     # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/scenarios-enis.html#creating-dual-homed-instances-with-workloads-roles-on-distinct-subnets
+  #     for_each = var.network_interfaces
+  #     content {
+  #       delete_on_termination = false
+  #       device_index          = network_interfaces.key
+  #       network_interface_id  = network_interfaces.value
+  #     }
+  #   }
 
   tag_specifications {
     resource_type = "instance"
@@ -90,8 +85,6 @@ resource "aws_autoscaling_group" "tailscale" {
     id      = aws_launch_template.tailscale.id
     version = aws_launch_template.tailscale.latest_version
   }
-
-  availability_zones = [data.aws_network_interface.selected[0].availability_zone]
 
   desired_capacity = 1
   min_size         = 0
