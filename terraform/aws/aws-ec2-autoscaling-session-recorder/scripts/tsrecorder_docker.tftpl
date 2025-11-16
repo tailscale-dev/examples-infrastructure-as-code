@@ -26,7 +26,7 @@ docker run \
     --name tsrecorder \
     -e TS_AUTHKEY=${tailscale_recorder_auth_key} \
     -v $HOME/tsrecorder:/data \
-    tailscale/tsrecorder:unstable   \
+    tailscale/tsrecorder:stable   \
     /tsrecorder \
         --dst='s3://s3.${bucket_region}.amazonaws.com' \
         --bucket='${bucket_name}' \
