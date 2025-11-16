@@ -16,7 +16,7 @@ locals {
   // Modify these to use your own VPC
   vpc_cidr_block     = module.vpc.vpc_cidr_block
   vpc_id             = module.vpc.vpc_id
-  subnet_id          = module.vpc.public_subnets[0]
+  subnet_id          = module.vpc.private_subnets[0]
   security_group_ids = [aws_security_group.tailscale.id]
   instance_type      = "c7g.medium"
   vpc_endpoint_route_table_ids = flatten([
@@ -141,19 +141,6 @@ resource "tailscale_tailnet_key" "main" {
   tags                = local.tailscale_acl_tags
 }
 
-resource "aws_network_interface" "primary" {
-  subnet_id       = local.subnet_id
-  security_groups = local.security_group_ids
-  tags            = local.aws_tags
-}
-resource "aws_eip" "primary" {
-  tags = local.aws_tags
-}
-resource "aws_eip_association" "primary" {
-  network_interface_id = aws_network_interface.primary.id
-  allocation_id        = aws_eip.primary.id
-}
-
 module "tailscale_aws_ec2_autoscaling" {
   source = "../internal-modules/aws-ec2-autoscaling/"
 
@@ -161,7 +148,8 @@ module "tailscale_aws_ec2_autoscaling" {
   instance_type          = local.instance_type
   instance_tags          = local.aws_tags
 
-  network_interfaces = [aws_network_interface.primary.id]
+  subnet_id          = local.subnet_id
+  security_group_ids = local.security_group_ids
 
   # Variables for Tailscale resources
   tailscale_hostname        = local.name
