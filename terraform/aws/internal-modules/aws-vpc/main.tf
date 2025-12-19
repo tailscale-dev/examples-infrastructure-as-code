@@ -1,7 +1,7 @@
 locals {
-  vpc_cidr            = var.cidr == "" ? cidrsubnet("10.0.0.0/16", 6, random_integer.vpc_cidr[0].result) : var.cidr # /22
-  public_subnet_cidr  = length(var.public_subnets) == 0 ? [cidrsubnet(local.vpc_cidr, 2, 0)] : var.public_subnets   # /24 inside the /22
-  private_subnet_cidr = length(var.private_subnets) == 0 ? [cidrsubnet(local.vpc_cidr, 2, 1)] : var.private_subnets # next /24
+  vpc_cidr            = var.cidr == "" ? cidrsubnet("10.0.0.0/16", 6, random_integer.vpc_cidr[0].result) : var.cidr                                   # /22
+  public_subnet_cidr  = length(var.public_subnets) == 0 ? [cidrsubnet(local.vpc_cidr, 2, 0), cidrsubnet(local.vpc_cidr, 2, 1)] : var.public_subnets   # /24 inside the /22
+  private_subnet_cidr = length(var.private_subnets) == 0 ? [cidrsubnet(local.vpc_cidr, 2, 2), cidrsubnet(local.vpc_cidr, 2, 3)] : var.private_subnets # next /24
 }
 
 # Pick a random /22 within 10.0.0.0/16
