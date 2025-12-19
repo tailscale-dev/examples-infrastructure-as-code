@@ -5,5 +5,6 @@ terraform {
       version = ">= 7.0, < 8.0"
     }
   }
-}
 
+  required_version = ">= 1.0, < 2.0"
+}
