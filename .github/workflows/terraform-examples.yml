@@ -20,8 +20,8 @@ jobs:
           cache: true
       - name: Show version
         run: tflint --version
-      - name: help # TODO: remove
-        run: tflint -help
+      # - name: help
+      #   run: tflint -help
       - name: Run
         run: tflint --chdir=terraform --recursive
 
