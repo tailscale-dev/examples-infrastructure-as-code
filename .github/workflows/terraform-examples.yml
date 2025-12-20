@@ -9,32 +9,44 @@ on:
 
 jobs:
 
-  check-terraform-fmt:
+  terraform-tflint:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
         uses: actions/checkout@v4
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v6
+        with:
+          cache: true
+      - name: Show version
+        run: tflint --version
+      # - name: help
+      #   run: tflint -help
+      - name: Run
+        run: tflint --chdir=terraform --recursive
 
+  terraform-check-fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v2
-
       - name: Check Terraform formatting
         run: |
           bash terraform/repo-scripts/check-terraform-fmt.sh terraform
 
-  check-terraform-variables-tailscale-install-scripts:
+  terraform-check-variables-tailscale-install-scripts:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
         uses: actions/checkout@v4
-
       # - name: tree
       #   working-directory: terraform
       #   run: |
       #     apt-get -y update
       #     apt-get -y install tree
       #     tree -a
-
       - name: Check variables-tailscale-install-scripts.tf files
         run: |
           bash terraform/repo-scripts/check-variables-tailscale-install-scripts.sh terraform

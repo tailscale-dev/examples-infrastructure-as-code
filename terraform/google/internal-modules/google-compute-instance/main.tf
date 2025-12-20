@@ -9,10 +9,6 @@ module "tailscale_install_scripts" {
   additional_after_scripts  = var.additional_after_scripts
 }
 
-data "google_compute_subnetwork" "selected" {
-  self_link = "https://www.googleapis.com/compute/v1/${var.subnet}" # requires full URL - https://github.com/hashicorp/terraform-provider-google/issues/9919
-}
-
 data "google_compute_image" "ubuntu" {
   project = "ubuntu-os-cloud"
   family  = "ubuntu-2404-lts-amd64"
