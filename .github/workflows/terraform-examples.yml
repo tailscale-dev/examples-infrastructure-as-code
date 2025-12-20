@@ -23,7 +23,7 @@ jobs:
       - name: help # TODO: remove
         run: tflint -help
       - name: Run
-        run: tflint --chdir=terraform --recursive -f compact
+        run: tflint --chdir=terraform --recursive
 
   terraform-check-fmt:
     runs-on: ubuntu-latest
