@@ -37,10 +37,10 @@ output "private_dns_resolver_inbound_endpoint_ip" {
 }
 
 output "nat_public_ips" {
-  value = azurerm_public_ip.nat.*.ip_address
+  value = azurerm_public_ip.nat[*].ip_address
 }
 
 output "nat_ids" {
   description = "Useful for using within `depends_on` for other resources"
-  value       = azurerm_nat_gateway.nat.*.id
+  value       = azurerm_nat_gateway.nat[*].id
 }
