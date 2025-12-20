@@ -1,5 +1,3 @@
-variable "not_used" {}
-
 locals {
   name = "example-${basename(path.cwd)}"
 
