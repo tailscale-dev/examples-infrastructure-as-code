@@ -21,4 +21,4 @@ output "cmd_kubeconfig_aws" {
   value = "aws eks update-kubeconfig --region ${data.aws_region.current.region} --name ${module.eks.cluster_name}"
 }
 
-data "aws_region" "current" {} # TODO: move? or remove?
+data "aws_region" "current" {}
