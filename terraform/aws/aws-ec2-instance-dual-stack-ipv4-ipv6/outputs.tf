@@ -15,7 +15,7 @@ output "nat_public_ips" {
 }
 
 output "instance_ids" {
-  value = module.tailscale_aws_ec2.*.instance_id
+  value = module.tailscale_aws_ec2[*].instance_id
 }
 
 output "user_data_md5" {

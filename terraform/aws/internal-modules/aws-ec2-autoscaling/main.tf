@@ -36,7 +36,6 @@ resource "aws_launch_template" "tailscale" {
   key_name      = var.instance_key_name
 
   network_interfaces {
-    # associate_public_ip_address = true # TODO(clstokes): remove
     subnet_id       = var.subnet_id
     security_groups = var.security_group_ids
   }
@@ -52,17 +51,6 @@ resource "aws_launch_template" "tailscale" {
     http_endpoint = var.instance_metadata_options["http_endpoint"]
     http_tokens   = var.instance_metadata_options["http_tokens"]
   }
-
-  # TODO(clstokes): remove
-  #   dynamic "network_interfaces" {
-  #     # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/scenarios-enis.html#creating-dual-homed-instances-with-workloads-roles-on-distinct-subnets
-  #     for_each = var.network_interfaces
-  #     content {
-  #       delete_on_termination = false
-  #       device_index          = network_interfaces.key
-  #       network_interface_id  = network_interfaces.value
-  #     }
-  #   }
 
   tag_specifications {
     resource_type = "instance"

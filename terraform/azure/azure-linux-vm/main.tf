@@ -27,7 +27,6 @@ locals {
   location            = azurerm_resource_group.main.location
 
   vpc_cidr_block            = module.vpc.vnet_address_space
-  vpc_id                    = module.vpc.vnet_id
   subnet_id                 = module.vpc.public_subnet_id
   network_security_group_id = azurerm_network_security_group.tailscale_ingress.id
   instance_type             = "Standard_D2as_v6"
