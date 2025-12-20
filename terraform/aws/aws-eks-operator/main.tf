@@ -6,8 +6,8 @@ locals {
   }
 
   // Modify these to use your own VPC
-  vpc_id         = module.vpc.vpc_id
-  subnet_ids     = module.vpc.private_subnets
+  vpc_id     = module.vpc.vpc_id
+  subnet_ids = module.vpc.private_subnets
 
   # EKS cluster configuration
   cluster_version    = "1.34" # TODO: omit this?
