@@ -5,7 +5,7 @@ locals {
     Name = local.name
   }
 
-  // Modify these to use your own VPC
+  # Modify these to use your own VPC
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.vpc.private_subnets
 
@@ -17,13 +17,14 @@ locals {
   min_size           = 1
 
   # Tailscale Operator configuration
+  namespace_name                = "tailscale"
   operator_name                 = local.name
   operator_version              = "1.92.4"
   tailscale_oauth_client_id     = var.tailscale_oauth_client_id
   tailscale_oauth_client_secret = var.tailscale_oauth_client_secret
 }
 
-// Remove this to use your own VPC.
+# Remove this to use your own VPC.
 module "vpc" {
   source = "../internal-modules/aws-vpc"
 
@@ -50,7 +51,7 @@ module "eks" {
   }
 
   # Once the Tailscale operator is installed, `endpoint_public_access` can be disabled.
-  # This is left enabled for the sake of easy adoption. 
+  # This is left enabled for the sake of easy adoption.
   endpoint_public_access = true
 
   # Optional: Adds the current caller identity as an administrator via cluster access entry
@@ -77,7 +78,7 @@ module "eks" {
 # Kubernetes namespace for Tailscale operator
 resource "kubernetes_namespace_v1" "tailscale_operator" {
   metadata {
-    name = "tailscale"
+    name = local.namespace_name
     labels = {
       "pod-security.kubernetes.io/enforce" = "privileged"
     }
@@ -119,30 +120,3 @@ resource "helm_release" "tailscale_operator" {
     },
   ]
 }
-
-# TODO: get working on first apply?
-# locals {
-#   # TODO: inline/simplify?
-#   yaml_tailscale_operator_ha_proxy = <<-EOT
-#         apiVersion: tailscale.com/v1alpha1
-#         kind: ProxyGroup
-#         metadata:
-#             name: ${helm_release.tailscale_operator.name}-ha
-#         spec:
-#             type: kube-apiserver
-#             replicas: 2
-#             tags: ["tag:k8s"]
-#             kubeAPIServer:
-#                 mode: auth
-#     EOT
-# }
-
-# resource "kubernetes_manifest" "tailscale_operator_ha_proxy" {
-#   manifest = yamldecode(local.yaml_tailscale_operator_ha_proxy)
-
-#   depends_on = [
-#     module.eks.cluster_endpoint, # TODO: remove?
-#     helm_release.tailscale_operator,
-#     kubernetes_namespace_v1.tailscale_operator,
-#   ]
-# }

@@ -42,6 +42,8 @@ tailscale_oauth_client_secret = "your-oauth-client-secret"
 ```shell
 terraform init
 terraform apply
+
+# execute the output from `terraform output cmd_kubectl_ha_proxy_apply` to deploy the HA proxy
 ```
 
 #### Verify deployment
@@ -74,5 +76,7 @@ kubectl get pods -n tailscale
 ## To destroy
 
 ```shell
+# execute the output from `terraform output cmd_kubectl_ha_proxy_delete` to delete the HA proxy
+
 terraform destroy
 ```

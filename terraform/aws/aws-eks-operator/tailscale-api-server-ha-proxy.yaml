@@ -1,0 +1,10 @@
+apiVersion: tailscale.com/v1alpha1
+kind: ProxyGroup
+metadata:
+    name: ${OPERATOR_NAME}-ha
+spec:
+    type: kube-apiserver
+    replicas: 2
+    tags: ["tag:k8s"]
+    kubeAPIServer:
+        mode: auth

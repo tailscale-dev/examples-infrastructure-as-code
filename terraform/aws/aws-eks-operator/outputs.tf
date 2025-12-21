@@ -22,3 +22,13 @@ output "cmd_kubeconfig_aws" {
   description = "Command to configure kubeconfig for public access to the EKS cluster"
   value       = "aws eks update-kubeconfig --region ${data.aws_region.current.region} --name ${module.eks.cluster_name}"
 }
+
+output "cmd_kubectl_ha_proxy_apply" {
+  description = "Command to deploy the Tailscale high availability API server proxy - https://tailscale.com/kb/1437/kubernetes-operator-api-server-proxy#configuring-a-high-availability-api-server-proxy"
+  value       = "OPERATOR_NAME=${helm_release.tailscale_operator.name} envsubst < tailscale-api-server-ha-proxy.yaml | kubectl apply -f -"
+}
+
+output "cmd_kubectl_ha_proxy_delete" {
+  description = "Command to delete the Tailscale high availability API server proxy - https://tailscale.com/kb/1437/kubernetes-operator-api-server-proxy#configuring-a-high-availability-api-server-proxy"
+  value       = "OPERATOR_NAME=${helm_release.tailscale_operator.name} envsubst < tailscale-api-server-ha-proxy.yaml | kubectl delete -f -"
+}
