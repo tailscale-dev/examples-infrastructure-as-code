@@ -21,7 +21,7 @@ locals {
     ))}",
   ]
 
-  // Modify these to use your own VPC
+  # Modify these to use your own VPC
   resource_group_id   = azurerm_resource_group.main.id
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
