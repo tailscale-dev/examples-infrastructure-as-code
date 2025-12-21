@@ -1,8 +1,8 @@
 default: help
 
-.PHONY: terraform-tflint
-terraform-tflint: ## Run 'terraform-tflint' github actions with https://github.com/nektos/act
-	act -j terraform-tflint
+.PHONY: terraform-check-tflint
+terraform-check-tflint: ## Run 'terraform-check-tflint' github actions with https://github.com/nektos/act
+	act -j terraform-check-tflint
 
 .PHONY: check-terraform-examples
 terraform-check-examples: ## Run specific 'check' github actions with https://github.com/nektos/act
