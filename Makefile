@@ -9,6 +9,10 @@ terraform-check-examples: ## Run specific 'check' github actions with https://gi
 	act -j terraform-check-fmt
 	act -j terraform-check-variables-tailscale-install-scripts
 
+.PHONY: terraform-fmt
+terraform-fmt: ## Run 'terraform-fmt' github actions with https://github.com/nektos/act
+	terraform fmt -recursive
+
 .PHONY: help
 help: ## Display this information. Default target.
 	@echo "Valid targets:"
