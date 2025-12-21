@@ -64,7 +64,7 @@ kubectl logs -n tailscale -l app.kubernetes.io/name=tailscale-operator
 After deployment, configure kubectl to access your cluster using Tailscale:
 
 ```shell
-tailscale configure kubeconfig ${local.operator_name}
+tailscale configure kubeconfig ${terraform output -raw operator_name}
 ```
 
 ```shell

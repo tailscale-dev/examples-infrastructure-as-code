@@ -102,12 +102,8 @@ resource "helm_release" "tailscale_operator" {
         hostname = local.operator_name
       }
       apiServerProxyConfig = {
-        mode = "true"
+        mode = true
         tags = "tag:k8s-operator,tag:k8s-api-server"
-      }
-      oauth = {
-        clientId     = local.tailscale_oauth_client_id
-        clientSecret = local.tailscale_oauth_client_secret
       }
     })
   ]
