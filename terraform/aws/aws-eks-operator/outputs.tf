@@ -15,10 +15,10 @@ output "tailscale_operator_namespace" {
 
 output "cmd_kubeconfig_tailscale" {
   description = "Command to configure kubeconfig for Tailscale access to the EKS cluster"
-  value = "tailscale configure kubeconfig ${local.operator_name}"
+  value       = "tailscale configure kubeconfig ${local.operator_name}"
 }
 
 output "cmd_kubeconfig_aws" {
   description = "Command to configure kubeconfig for public access to the EKS cluster"
-  value = "aws eks update-kubeconfig --region ${data.aws_region.current.region} --name ${module.eks.cluster_name}"
+  value       = "aws eks update-kubeconfig --region ${data.aws_region.current.region} --name ${module.eks.cluster_name}"
 }
