@@ -21,7 +21,7 @@ locals {
     ])}",
   ]
 
-  // Modify these to use your own VPC
+  # Modify these to use your own VPC
   vpc_cidr_block     = module.vpc.vpc_cidr_block
   vpc_id             = module.vpc.vpc_id
   subnet_id          = module.vpc.public_subnets[0]
@@ -29,7 +29,7 @@ locals {
   instance_type      = "c7g.medium"
 }
 
-// Remove this to use your own VPC.
+# Remove this to use your own VPC.
 module "vpc" {
   source = "../internal-modules/aws-vpc"
 
