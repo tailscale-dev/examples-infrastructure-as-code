@@ -14,10 +14,15 @@ terraform {
       source  = "hashicorp/helm"
       version = ">= 3.1.1, < 4.0"
     }
+    null = {
+      source  = "hashicorp/null"
+      version = ">= 3.2.0, < 4.0"
+    }
   }
 }
 
 provider "kubernetes" {
+  alias                  = "this"
   host                   = module.eks.cluster_endpoint
   cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
 
@@ -29,6 +34,7 @@ provider "kubernetes" {
 }
 
 provider "helm" {
+  alias = "this"
   kubernetes = {
     host                   = module.eks.cluster_endpoint
     cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)

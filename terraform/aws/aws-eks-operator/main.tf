@@ -62,8 +62,6 @@ module "eks" {
 
   eks_managed_node_groups = {
     main = {
-      # Starting on 1.30, AL2023 is the default AMI type for EKS managed node groups
-      #   ami_type       = "AL2023_x86_64_STANDARD"
       instance_types = [local.node_instance_type]
 
       desired_size = local.desired_size
@@ -75,8 +73,9 @@ module "eks" {
   tags = local.aws_tags
 }
 
-# Kubernetes namespace for Tailscale operator
 resource "kubernetes_namespace_v1" "tailscale_operator" {
+  provider = kubernetes.this
+
   metadata {
     name = local.namespace_name
     labels = {
@@ -86,6 +85,8 @@ resource "kubernetes_namespace_v1" "tailscale_operator" {
 }
 
 resource "helm_release" "tailscale_operator" {
+  provider = helm.this
+
   name      = local.operator_name
   namespace = kubernetes_namespace_v1.tailscale_operator.metadata[0].name
 
@@ -118,5 +119,45 @@ resource "helm_release" "tailscale_operator" {
       name  = "oauth.clientSecret"
       value = local.tailscale_oauth_client_secret
     },
+  ]
+
+  depends_on = [
+    module.eks,
+  ]
+}
+
+resource "null_resource" "kubectl_ha_proxy" {
+  count = 1 # Change to 0 to destroy. Commenting or removing the resource will not run the destroy provisioners.
+  triggers = {
+    region        = data.aws_region.current.region
+    cluster_arn   = module.eks.cluster_arn
+    cluster_name  = module.eks.cluster_name
+    operator_name = helm_release.tailscale_operator.name
+  }
+
+  #
+  # Create provisioners
+  #
+  provisioner "local-exec" {
+    command = "aws eks update-kubeconfig --region ${self.triggers.region} --name ${self.triggers.cluster_name}"
+  }
+  provisioner "local-exec" {
+    command = "OPERATOR_NAME=${self.triggers.operator_name} envsubst < tailscale-api-server-ha-proxy.yaml | kubectl apply --context=${self.triggers.cluster_arn} -f -"
+  }
+
+  #
+  # Destroy provisioners
+  #
+  provisioner "local-exec" {
+    when    = destroy
+    command = "aws eks update-kubeconfig --region ${self.triggers.region} --name ${self.triggers.cluster_name}"
+  }
+  provisioner "local-exec" {
+    when    = destroy
+    command = "OPERATOR_NAME=${self.triggers.operator_name} envsubst < tailscale-api-server-ha-proxy.yaml | kubectl delete --context=${self.triggers.cluster_arn} -f -"
+  }
+
+  depends_on = [
+    helm_release.tailscale_operator,
   ]
 }
