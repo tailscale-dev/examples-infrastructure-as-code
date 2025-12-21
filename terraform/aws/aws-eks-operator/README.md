@@ -1,4 +1,4 @@
-# aws-eks-tailscale-operator
+# aws-eks-operator
 
 This example creates the following:
 

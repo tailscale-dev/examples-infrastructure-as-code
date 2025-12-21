@@ -17,7 +17,7 @@ locals {
   min_size           = 1
 
   # Tailscale Operator configuration
-  operator_name                 = "${local.name}-operator"
+  operator_name                 = local.name
   operator_version              = "1.92.4"
   tailscale_oauth_client_id     = var.tailscale_oauth_client_id
   tailscale_oauth_client_secret = var.tailscale_oauth_client_secret
