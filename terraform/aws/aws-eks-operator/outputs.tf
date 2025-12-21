@@ -8,9 +8,14 @@ output "cluster_name" {
   value       = module.eks.cluster_name
 }
 
-output "tailscale_operator_namespace" {
+output "operator_namespace" {
   description = "Kubernetes namespace where Tailscale operator is deployed"
   value       = kubernetes_namespace_v1.tailscale_operator.metadata[0].name
+}
+
+output "operator_name" {
+  description = "Configured name of the Tailscale operator"
+  value       = helm_release.tailscale_operator.name
 }
 
 output "cmd_kubeconfig_tailscale" {
