@@ -78,3 +78,7 @@ terraform destroy
 
 # remove leftover Tailscale devices at https://login.tailscale.com/admin/machines
 ```
+
+## Limitations
+
+- The [HA API server proxy](https://tailscale.com/kb/1437/kubernetes-operator-api-server-proxy#configuring-a-high-availability-api-server-proxy) is deployed using a [terraform null_resource](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) instead of [kubernetes_manifest](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/manifest.html) due to a Terraform limitation that results in `cannot create REST client: no client config` errors on first run.

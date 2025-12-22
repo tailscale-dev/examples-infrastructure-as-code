@@ -62,6 +62,7 @@ module "eks" {
 
   eks_managed_node_groups = {
     main = {
+      name           = local.name
       instance_types = [local.node_instance_type]
 
       desired_size = local.desired_size
@@ -84,6 +85,9 @@ resource "kubernetes_namespace_v1" "tailscale_operator" {
   }
 }
 
+#
+# https://tailscale.com/kb/1236/kubernetes-operator#helm
+#
 resource "helm_release" "tailscale_operator" {
   provider = helm.this
 
@@ -126,6 +130,9 @@ resource "helm_release" "tailscale_operator" {
   ]
 }
 
+#
+# https://tailscale.com/kb/1437/kubernetes-operator-api-server-proxy#configuring-a-high-availability-api-server-proxy
+#
 resource "null_resource" "kubectl_ha_proxy" {
   count = 1 # Change to 0 to destroy. Commenting or removing the resource will not run the destroy provisioners.
   triggers = {
@@ -142,7 +149,7 @@ resource "null_resource" "kubectl_ha_proxy" {
     command = "aws eks update-kubeconfig --region ${self.triggers.region} --name ${self.triggers.cluster_name}"
   }
   provisioner "local-exec" {
-    command = "OPERATOR_NAME=${self.triggers.operator_name} envsubst < tailscale-api-server-ha-proxy.yaml | kubectl apply --context=${self.triggers.cluster_arn} -f -"
+    command = "OPERATOR_NAME=${self.triggers.operator_name} envsubst < ${path.module}/tailscale-api-server-ha-proxy.yaml | kubectl apply --context=${self.triggers.cluster_arn} -f -"
   }
 
   #
@@ -154,10 +161,11 @@ resource "null_resource" "kubectl_ha_proxy" {
   }
   provisioner "local-exec" {
     when    = destroy
-    command = "OPERATOR_NAME=${self.triggers.operator_name} envsubst < tailscale-api-server-ha-proxy.yaml | kubectl delete --context=${self.triggers.cluster_arn} -f -"
+    command = "OPERATOR_NAME=${self.triggers.operator_name} envsubst < ${path.module}/tailscale-api-server-ha-proxy.yaml | kubectl delete --context=${self.triggers.cluster_arn} -f -"
   }
 
   depends_on = [
+    module.vpc, # prevent network changes before this finishes during a destroy
     helm_release.tailscale_operator,
   ]
 }

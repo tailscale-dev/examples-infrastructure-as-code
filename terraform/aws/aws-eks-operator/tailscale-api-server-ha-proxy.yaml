@@ -1,3 +1,4 @@
+# https://tailscale.com/kb/1437/kubernetes-operator-api-server-proxy#configuring-a-high-availability-api-server-proxy
 apiVersion: tailscale.com/v1alpha1
 kind: ProxyGroup
 metadata:
