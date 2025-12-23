@@ -74,7 +74,7 @@ module "eks" {
 
   eks_managed_node_groups = {
     main = {
-      name           = "${substr(local.name, 0, 20)}"
+      name           = substr(local.name, 0, 20)
       instance_types = [local.node_instance_type]
 
       desired_size = local.desired_size
