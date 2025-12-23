@@ -143,6 +143,9 @@ resource "helm_release" "tailscale_operator" {
 #
 # https://tailscale.com/kb/1437/kubernetes-operator-api-server-proxy#configuring-a-high-availability-api-server-proxy
 #
+# Remove or comment out the `null_resource` provisioners that deploy `tailscale-api-server-ha-proxy.yaml` for the 
+# high availability API server proxy to run from other platforms.
+#
 resource "null_resource" "kubectl_ha_proxy" {
   count = 1 # Change to 0 to destroy. Commenting or removing the resource will not run the destroy provisioners.
   triggers = {

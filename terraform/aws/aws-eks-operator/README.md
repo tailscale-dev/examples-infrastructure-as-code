@@ -6,6 +6,7 @@ This example creates the following:
 - an EKS cluster with a managed node group
 - a Kubernetes namespace for the [Tailscale operator](https://tailscale.com/kb/1236/kubernetes-operator)
 - the Tailscale Kubernetes Operator deployed via [Helm](https://tailscale.com/kb/1236/kubernetes-operator#helm)
+- a [high availability API server proxy](https://tailscale.com/kb/1437/kubernetes-operator-api-server-proxy#configuring-a-high-availability-api-server-proxy)
 
 ## Considerations
 
@@ -16,6 +17,8 @@ This example creates the following:
 
 ## Prerequisites
 
+- The configuration as-is uses currently only works on macOS or Linux clients. Remove or comment out the `null_resource` provisioners that deploy `tailscale-api-server-ha-proxy.yaml` for the [high availability API server proxy](https://tailscale.com/kb/1437/kubernetes-operator-api-server-proxy#configuring-a-high-availability-api-server-proxy) to run from other platforms.
+- Requires the [AWS CLI](https://aws.amazon.com/cli/) for initial authentication to the created AWS EKS cluster.
 - Create a [Tailscale OAuth Client](https://tailscale.com/kb/1215/oauth-clients#setting-up-an-oauth-client) with appropriate scopes
 - Ensure you have AWS CLI configured with appropriate permissions for EKS
 - Install `kubectl` for cluster access after deployment
