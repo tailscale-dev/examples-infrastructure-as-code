@@ -23,7 +23,8 @@ locals {
   tailscale_oauth_client_id     = var.tailscale_oauth_client_id
   tailscale_oauth_client_secret = var.tailscale_oauth_client_secret
 
-  ha_proxy_service_name = "${helm_release.tailscale_operator.name}-ha"
+  enable_ha_proxy_service = true
+  ha_proxy_service_name   = "${helm_release.tailscale_operator.name}-ha"
 }
 
 # This isn't required but helps avoid conflicts and Let's Encrypt throttling to make testing and iterating easier.
@@ -147,7 +148,8 @@ resource "helm_release" "tailscale_operator" {
 # high availability API server proxy to run from other platforms.
 #
 resource "null_resource" "kubectl_ha_proxy" {
-  count = 1 # Change to 0 to destroy. Commenting or removing the resource will not run the destroy provisioners.
+  count = local.enable_ha_proxy_service ? 1 : 0
+
   triggers = {
     region                = data.aws_region.current.region
     cluster_arn           = module.eks.cluster_arn
