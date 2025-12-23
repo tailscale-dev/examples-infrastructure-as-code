@@ -18,7 +18,7 @@ locals {
 
   # Tailscale Operator configuration
   namespace_name                = "tailscale"
-  operator_name                 = "${local.name}-${random_string.operator_name_suffix.result}"
+  operator_name                 = "${local.name}-${random_integer.operator_name_suffix.result}"
   operator_version              = "1.92.4"
   tailscale_oauth_client_id     = var.tailscale_oauth_client_id
   tailscale_oauth_client_secret = var.tailscale_oauth_client_secret
@@ -28,11 +28,9 @@ locals {
 }
 
 # This isn't required but helps avoid conflicts and Let's Encrypt throttling to make testing and iterating easier.
-resource "random_string" "operator_name_suffix" {
-  length  = 3
-  numeric = false
-  special = false
-  upper   = false
+resource "random_integer" "operator_name_suffix" {
+  min = 100
+  max = 999
 }
 
 # Remove this to use your own VPC.
@@ -94,6 +92,10 @@ resource "kubernetes_namespace_v1" "tailscale_operator" {
       "pod-security.kubernetes.io/enforce" = "privileged"
     }
   }
+
+  depends_on = [
+    module.eks,
+  ]
 }
 
 #

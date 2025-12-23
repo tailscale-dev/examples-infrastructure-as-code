@@ -17,19 +17,17 @@ This example creates the following:
 
 ## Prerequisites
 
-- The configuration as-is uses currently only works on macOS or Linux clients. Remove or comment out the `null_resource` provisioners that deploy `tailscale-api-server-ha-proxy.yaml` for the [high availability API server proxy](https://tailscale.com/kb/1437/kubernetes-operator-api-server-proxy#configuring-a-high-availability-api-server-proxy) to run from other platforms.
-- Requires the [AWS CLI](https://aws.amazon.com/cli/) for initial authentication to the created AWS EKS cluster.
-- Create a [Tailscale OAuth Client](https://tailscale.com/kb/1215/oauth-clients#setting-up-an-oauth-client) with appropriate scopes
-- Ensure you have AWS CLI configured with appropriate permissions for EKS
-- Install `kubectl` for cluster access after deployment
+- Follow the [Kubernetes Operator prerequisites](https://tailscale.com/kb/1236/kubernetes-operator#prerequisites).
+- For the [high availability API server proxy](https://tailscale.com/kb/1437/kubernetes-operator-api-server-proxy#configuring-a-high-availability-api-server-proxy):
+    - The configuration as-is uses currently only works on macOS or Linux clients. Remove or comment out the `null_resource` provisioners that deploy `tailscale-api-server-ha-proxy.yaml`  to run from other platforms.
+    - Requires the [kubectl CLI](https://kubernetes.io/docs/reference/kubectl/) and [AWS CLI](https://aws.amazon.com/cli/).
+
 
 ## To use
 
 Follow the documentation to configure the Terraform providers:
 
 - [AWS](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
-- [Kubernetes](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs)
-- [Helm](https://registry.terraform.io/providers/hashicorp/helm/latest/docs)
 
 ### Configure variables
 
@@ -59,7 +57,7 @@ Check that the Tailscale operator is running:
 
 ```shell
 kubectl get pods -n tailscale
-kubectl logs -n tailscale -l app.kubernetes.io/name=tailscale-operator
+kubectl logs -n tailscale -l app.kubernetes.io/name=$(terraform output -raw operator_name)
 ```
 
 #### Verify connectivity via the [API server proxy](https://tailscale.com/kb/1437/kubernetes-operator-api-server-proxy)
