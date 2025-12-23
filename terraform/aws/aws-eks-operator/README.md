@@ -19,7 +19,7 @@ This example creates the following:
 
 - Follow the [Kubernetes Operator prerequisites](https://tailscale.com/kb/1236/kubernetes-operator#prerequisites).
 - For the [high availability API server proxy](https://tailscale.com/kb/1437/kubernetes-operator-api-server-proxy#configuring-a-high-availability-api-server-proxy):
-    - The configuration as-is uses currently only works on macOS or Linux clients. Remove or comment out the `null_resource` provisioners that deploy `tailscale-api-server-ha-proxy.yaml`  to run from other platforms.
+    - The configuration as-is uses currently only works on macOS or Linux clients. Remove or comment out the `null_resource` provisioners that deploy `tailscale-api-server-ha-proxy.yaml` to run from other platforms.
     - Requires the [kubectl CLI](https://kubernetes.io/docs/reference/kubectl/) and [AWS CLI](https://aws.amazon.com/cli/).
 
 
