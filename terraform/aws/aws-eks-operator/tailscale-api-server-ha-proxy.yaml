@@ -2,7 +2,7 @@
 apiVersion: tailscale.com/v1alpha1
 kind: ProxyGroup
 metadata:
-    name: ${OPERATOR_NAME}-ha
+    name: ${HA_PROXY_SERVICE_NAME}
 spec:
     type: kube-apiserver
     replicas: 2

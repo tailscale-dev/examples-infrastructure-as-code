@@ -76,7 +76,7 @@ kubectl get pods -n tailscale
 ```shell
 terraform destroy
 
-# remove leftover Tailscale devices at https://login.tailscale.com/admin/machines
+# remove leftover Tailscale devices at https://login.tailscale.com/admin/machines and services at https://login.tailscale.com/admin/services
 ```
 
 ## Limitations

@@ -18,10 +18,20 @@ locals {
 
   # Tailscale Operator configuration
   namespace_name                = "tailscale"
-  operator_name                 = local.name
+  operator_name                 = "${local.name}-${random_string.operator_name_suffix.result}"
   operator_version              = "1.92.4"
   tailscale_oauth_client_id     = var.tailscale_oauth_client_id
   tailscale_oauth_client_secret = var.tailscale_oauth_client_secret
+
+  ha_proxy_service_name = "${helm_release.tailscale_operator.name}-ha"
+}
+
+# This isn't required but helps avoid Let's Encrypt throttling to make testing and iterating easier.
+resource "random_string" "operator_name_suffix" {
+  length  = 3
+  numeric = false
+  special = false
+  upper   = false
 }
 
 # Remove this to use your own VPC.
@@ -38,6 +48,8 @@ module "eks" {
 
   name               = local.name
   kubernetes_version = local.cluster_version
+
+  tags = local.aws_tags
 
   addons = {
     coredns = {}
@@ -62,7 +74,7 @@ module "eks" {
 
   eks_managed_node_groups = {
     main = {
-      name           = local.name
+      name           = "${substr(local.name, 0, 20)}"
       instance_types = [local.node_instance_type]
 
       desired_size = local.desired_size
@@ -70,8 +82,6 @@ module "eks" {
       min_size     = local.min_size
     }
   }
-
-  tags = local.aws_tags
 }
 
 resource "kubernetes_namespace_v1" "tailscale_operator" {
@@ -136,10 +146,10 @@ resource "helm_release" "tailscale_operator" {
 resource "null_resource" "kubectl_ha_proxy" {
   count = 1 # Change to 0 to destroy. Commenting or removing the resource will not run the destroy provisioners.
   triggers = {
-    region        = data.aws_region.current.region
-    cluster_arn   = module.eks.cluster_arn
-    cluster_name  = module.eks.cluster_name
-    operator_name = helm_release.tailscale_operator.name
+    region                = data.aws_region.current.region
+    cluster_arn           = module.eks.cluster_arn
+    cluster_name          = module.eks.cluster_name
+    ha_proxy_service_name = local.ha_proxy_service_name
   }
 
   #
@@ -149,7 +159,7 @@ resource "null_resource" "kubectl_ha_proxy" {
     command = "aws eks update-kubeconfig --region ${self.triggers.region} --name ${self.triggers.cluster_name}"
   }
   provisioner "local-exec" {
-    command = "OPERATOR_NAME=${self.triggers.operator_name} envsubst < ${path.module}/tailscale-api-server-ha-proxy.yaml | kubectl apply --context=${self.triggers.cluster_arn} -f -"
+    command = "HA_PROXY_SERVICE_NAME=${self.triggers.ha_proxy_service_name} envsubst < ${path.module}/tailscale-api-server-ha-proxy.yaml | kubectl apply --context=${self.triggers.cluster_arn} -f -"
   }
 
   #
@@ -161,7 +171,7 @@ resource "null_resource" "kubectl_ha_proxy" {
   }
   provisioner "local-exec" {
     when    = destroy
-    command = "OPERATOR_NAME=${self.triggers.operator_name} envsubst < ${path.module}/tailscale-api-server-ha-proxy.yaml | kubectl delete --context=${self.triggers.cluster_arn} -f -"
+    command = "HA_PROXY_SERVICE_NAME=${self.triggers.ha_proxy_service_name} envsubst < ${path.module}/tailscale-api-server-ha-proxy.yaml | kubectl delete --context=${self.triggers.cluster_arn} -f -"
   }
 
   depends_on = [
