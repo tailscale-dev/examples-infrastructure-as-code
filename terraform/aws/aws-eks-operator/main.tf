@@ -10,7 +10,7 @@ locals {
   subnet_ids = module.vpc.private_subnets
 
   # EKS cluster configuration
-  cluster_version    = "1.34" # TODO: omit this?
+  cluster_version    = data.aws_eks_cluster_versions.latest.cluster_versions[0].cluster_version
   node_instance_type = "t3.medium"
   desired_size       = 2
   max_size           = 2
@@ -26,7 +26,7 @@ locals {
   ha_proxy_service_name = "${helm_release.tailscale_operator.name}-ha"
 }
 
-# This isn't required but helps avoid Let's Encrypt throttling to make testing and iterating easier.
+# This isn't required but helps avoid conflicts and Let's Encrypt throttling to make testing and iterating easier.
 resource "random_string" "operator_name_suffix" {
   length  = 3
   numeric = false
