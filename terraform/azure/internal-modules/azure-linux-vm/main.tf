@@ -43,7 +43,7 @@ resource "azurerm_linux_virtual_machine" "tailscale_instance" {
   admin_username = var.admin_username
   admin_ssh_key {
     username   = var.admin_username
-    public_key = file(var.admin_public_key_path)
+    public_key = var.admin_public_key
   }
 
   os_disk {
