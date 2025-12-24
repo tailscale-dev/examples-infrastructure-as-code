@@ -33,8 +33,8 @@ output "instance_id" {
 }
 
 output "ssh_private_key_openssh" {
-  value = var.admin_public_key_path == "" ? tls_private_key.ssh[0].private_key_openssh : null
-  sensitive   = true
+  value     = var.admin_public_key_path == "" ? tls_private_key.ssh[0].private_key_openssh : null
+  sensitive = true
 }
 
 output "user_data_md5" {
