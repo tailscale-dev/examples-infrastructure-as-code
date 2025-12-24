@@ -30,7 +30,7 @@ locals {
   subnet_id                 = module.vpc.public_subnet_id
   network_security_group_id = azurerm_network_security_group.tailscale_ingress.id
   instance_type             = "Standard_D2as_v6"
-  admin_public_key          = var.admin_public_key_path == "" ? tls_private_key.ssh[0].public_key_pem : file(var.admin_public_key_path)
+  admin_public_key          = var.admin_public_key_path == "" ? tls_private_key.ssh[0].public_key_openssh : file(var.admin_public_key_path)
 }
 
 resource "azurerm_resource_group" "main" {
