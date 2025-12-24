@@ -30,7 +30,7 @@ locals {
   subnet_id                 = module.vpc.public_subnet_id
   network_security_group_id = azurerm_network_security_group.tailscale_ingress.id
   instance_type             = "Standard_D2as_v6"
-  admin_public_key_path     = var.admin_public_key_path
+  admin_public_key          = var.admin_public_key_path == "" ? tls_private_key.ssh[0].public_key_openssh : file(var.admin_public_key_path)
 }
 
 resource "azurerm_resource_group" "main" {
@@ -51,6 +51,11 @@ module "vpc" {
   subnet_name_public               = "public"
   subnet_name_private              = "private"
   subnet_name_private_dns_resolver = "dns-inbound"
+}
+
+resource "tls_private_key" "ssh" {
+  count     = var.admin_public_key_path == "" ? 1 : 0
+  algorithm = "ED25519"
 }
 
 #
@@ -87,10 +92,10 @@ module "tailscale_azure_linux_virtual_machine" {
   network_security_group_id = local.network_security_group_id
   public_ip_address_id      = azurerm_public_ip.vm.id
 
-  machine_name          = local.name
-  machine_size          = local.instance_type
-  admin_public_key_path = local.admin_public_key_path
-  resource_tags         = local.azure_tags
+  machine_name     = local.name
+  machine_size     = local.instance_type
+  admin_public_key = local.admin_public_key
+  resource_tags    = local.azure_tags
 
   # Variables for Tailscale resources
   tailscale_hostname        = local.name

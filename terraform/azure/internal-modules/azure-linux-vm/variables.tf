@@ -38,8 +38,8 @@ variable "admin_username" {
   type        = string
   default     = "ubuntu"
 }
-variable "admin_public_key_path" {
-  description = "The filepath of the SSH public key to assign to the virtual machine"
+variable "admin_public_key" {
+  description = "The SSH public key to assign to the virtual machine"
   type        = string
 }
 variable "public_ip_address_id" {
