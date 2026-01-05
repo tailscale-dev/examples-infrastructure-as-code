@@ -73,6 +73,8 @@ module "eks" {
 
   eks_managed_node_groups = {
     main = {
+      # Truncate the node group name to 20 characters to comply with AWS/EKS
+      # node group naming length constraints.
       name           = substr(local.name, 0, 20)
       instance_types = [local.node_instance_type]
 
@@ -121,7 +123,8 @@ resource "helm_release" "tailscale_operator" {
         hostname = local.operator_name
       }
       apiServerProxyConfig = {
-        mode = true
+        mode = "true"
+        allowImpersonation = "true"
         tags = "tag:k8s-operator,tag:k8s-api-server"
       }
     })
