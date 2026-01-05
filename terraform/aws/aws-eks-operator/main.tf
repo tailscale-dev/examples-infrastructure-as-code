@@ -117,12 +117,12 @@ resource "helm_release" "tailscale_operator" {
     yamlencode({
       operatorConfig = {
         image = {
-          tag  = "v${local.operator_version}"
+          tag = "v${local.operator_version}"
         }
         hostname = local.operator_name
       }
       apiServerProxyConfig = {
-        mode = "true"
+        mode               = "true"
         allowImpersonation = "true"
       }
     })
