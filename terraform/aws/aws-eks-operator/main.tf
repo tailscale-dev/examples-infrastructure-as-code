@@ -117,7 +117,6 @@ resource "helm_release" "tailscale_operator" {
     yamlencode({
       operatorConfig = {
         image = {
-          repo = "tailscale/k8s-operator"
           tag  = "v${local.operator_version}"
         }
         hostname = local.operator_name
@@ -125,7 +124,6 @@ resource "helm_release" "tailscale_operator" {
       apiServerProxyConfig = {
         mode = "true"
         allowImpersonation = "true"
-        tags = "tag:k8s-operator,tag:k8s-api-server"
       }
     })
   ]
