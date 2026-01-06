@@ -28,7 +28,7 @@ resource "google_compute_instance" "tailscale_instance" {
   network_interface {
     subnetwork = var.subnet
     access_config {
-      // Ephemeral public IP
+      # Ephemeral public IP
     }
   }
 

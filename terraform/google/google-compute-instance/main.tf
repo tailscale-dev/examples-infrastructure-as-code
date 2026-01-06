@@ -21,7 +21,7 @@ locals {
     ))}",
   ]
 
-  // Modify these to use your own VPC
+  # Modify these to use your own VPC
   project_id     = var.project_id
   region         = var.region
   zone           = var.zone
