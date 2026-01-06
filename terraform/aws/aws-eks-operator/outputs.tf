@@ -18,9 +18,9 @@ output "operator_name" {
   value       = helm_release.tailscale_operator.name
 }
 
-output "cmd_kubeconfig_tailscale" {
-  description = "Command to configure kubeconfig for Tailscale access to the EKS cluster"
-  value       = "tailscale configure kubeconfig ${helm_release.tailscale_operator.name}"
+output "ha_proxy_service_name" {
+  description = "Configured name of the Tailscale operator HA Service Proxy"
+  value       = local.ha_proxy_service_name
 }
 
 output "cmd_kubeconfig_aws" {
@@ -28,12 +28,12 @@ output "cmd_kubeconfig_aws" {
   value       = "aws eks update-kubeconfig --region ${data.aws_region.current.region} --name ${module.eks.cluster_name}"
 }
 
-output "cmd_kubectl_ha_proxy_apply" {
-  description = "Command to deploy the Tailscale high availability API server proxy - https://tailscale.com/kb/1437/kubernetes-operator-api-server-proxy#configuring-a-high-availability-api-server-proxy"
-  value       = "OPERATOR_NAME=${helm_release.tailscale_operator.name} envsubst < tailscale-api-server-ha-proxy.yaml | kubectl apply -f -"
+output "cmd_kubeconfig_tailscale" {
+  description = "Command to configure kubeconfig for Tailscale access to the EKS cluster"
+  value       = "tailscale configure kubeconfig ${helm_release.tailscale_operator.name}"
 }
 
-output "cmd_kubectl_ha_proxy_delete" {
-  description = "Command to delete the Tailscale high availability API server proxy - https://tailscale.com/kb/1437/kubernetes-operator-api-server-proxy#configuring-a-high-availability-api-server-proxy"
-  value       = "OPERATOR_NAME=${helm_release.tailscale_operator.name} envsubst < tailscale-api-server-ha-proxy.yaml | kubectl delete -f -"
+output "cmd_kubeconfig_tailscale_ha" {
+  description = "Command to configure kubeconfig for Tailscale access to the EKS cluster using the HA Service Proxy"
+  value       = "tailscale configure kubeconfig ${local.ha_proxy_service_name}"
 }

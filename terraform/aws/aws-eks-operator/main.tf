@@ -1,5 +1,6 @@
 locals {
-  name = "example-${basename(path.cwd)}"
+  name                    = "example-${basename(path.cwd)}"
+  name_with_random_suffix = "${local.name}-${random_integer.operator_name_suffix.result}"
 
   aws_tags = {
     Name = local.name
@@ -10,6 +11,7 @@ locals {
   subnet_ids = module.vpc.private_subnets
 
   # EKS cluster configuration
+  cluster_name       = local.name_with_random_suffix
   cluster_version    = data.aws_eks_cluster_versions.latest.cluster_versions[0].cluster_version
   node_instance_type = "t3.medium"
   desired_size       = 2
@@ -18,7 +20,7 @@ locals {
 
   # Tailscale Operator configuration
   namespace_name                = "tailscale"
-  operator_name                 = "${local.name}-${random_integer.operator_name_suffix.result}"
+  operator_name                 = local.name_with_random_suffix
   operator_version              = "1.92.4"
   tailscale_oauth_client_id     = var.tailscale_oauth_client_id
   tailscale_oauth_client_secret = var.tailscale_oauth_client_secret
@@ -45,7 +47,7 @@ module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = ">= 21.0, < 22.0"
 
-  name               = local.name
+  name               = local.cluster_name
   kubernetes_version = local.cluster_version
 
   tags = local.aws_tags
@@ -77,6 +79,11 @@ module "eks" {
       # node group naming length constraints.
       name           = substr(local.name, 0, 20)
       instance_types = [local.node_instance_type]
+
+      labels = {}
+
+      launch_template_name = local.name
+      launch_template_tags = local.aws_tags
 
       desired_size = local.desired_size
       max_size     = local.max_size
