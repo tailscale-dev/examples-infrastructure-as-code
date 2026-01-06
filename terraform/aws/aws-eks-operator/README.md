@@ -57,7 +57,7 @@ Check that the Tailscale operator is running:
 
 ```shell
 kubectl get pods -n tailscale
-kubectl logs -n tailscale -l app.kubernetes.io/name=$(terraform output -raw operator_name)
+kubectl logs -n tailscale -l app=operator
 ```
 
 #### Verify connectivity via the [API server proxy](https://tailscale.com/kb/1437/kubernetes-operator-api-server-proxy)
