@@ -9,7 +9,7 @@ on:
 
 jobs:
 
-  terraform-tflint:
+  terraform-check-tflint:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code

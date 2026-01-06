@@ -1,0 +1,11 @@
+# https://tailscale.com/kb/1437/kubernetes-operator-api-server-proxy#configuring-a-high-availability-api-server-proxy
+apiVersion: tailscale.com/v1alpha1
+kind: ProxyGroup
+metadata:
+    name: ${HA_PROXY_SERVICE_NAME}
+spec:
+    type: kube-apiserver
+    replicas: 2
+    tags: ["tag:k8s"]
+    kubeAPIServer:
+        mode: auth

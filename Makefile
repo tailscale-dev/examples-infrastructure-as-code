@@ -1,13 +1,17 @@
 default: help
 
-.PHONY: terraform-tflint
-terraform-tflint: ## Run 'terraform-tflint' github actions with https://github.com/nektos/act
-	act -j terraform-tflint
+.PHONY: terraform-check-tflint
+terraform-check-tflint: ## Run 'terraform-check-tflint' workflow with https://github.com/nektos/act
+	act -j terraform-check-tflint
 
-.PHONY: check-terraform-examples
-terraform-check-examples: ## Run specific 'check' github actions with https://github.com/nektos/act
+.PHONY: terraform-check-examples
+terraform-check-examples: ## Run specific 'check' workflow with https://github.com/nektos/act
 	act -j terraform-check-fmt
 	act -j terraform-check-variables-tailscale-install-scripts
+
+.PHONY: terraform-fmt
+terraform-fmt: ## Run 'terraform-fmt' workflow with https://github.com/nektos/act
+	@terraform fmt -recursive
 
 .PHONY: help
 help: ## Display this information. Default target.
