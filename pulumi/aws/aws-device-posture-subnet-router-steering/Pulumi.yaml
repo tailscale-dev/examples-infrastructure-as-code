@@ -1,0 +1,14 @@
+name: device-posture-subnet-router-steering
+description: A demo of posture-driven subnet router selection
+runtime:
+  name: nodejs
+  options:
+    packagemanager: npm
+packages:
+  tailscale_cloudinit_config:
+    source: terraform-module
+    version: 0.2.0
+    parameters:
+      - tailscale/tailscale/cloudinit
+      - 0.0.9
+      - tailscale_cloudinit_config

@@ -1,0 +1,55 @@
+{
+    "tagOwners": {
+        "tag:parent-tag": [],
+        "tag:pdx": ["tag:parent-tag"],
+        "tag:eug": ["tag:parent-tag"],
+        "tag:cle": ["tag:parent-tag"],
+        "tag:cvg": ["tag:parent-tag"],
+    },
+    "autoApprovers": {
+        "routes": {
+            "10.0.0.0/16": ["tag:pdx", "tag:eug", "tag:cle", "tag:cvg"],
+        },
+    },
+    "grants": [
+        // us-west-2 Steering
+        {
+            "src": ["autogroup:member"],
+            "dst": ["10.0.0.0/16"],
+            "ip": ["*"],
+            "via": ["tag:pdx"],
+            "srcPosture": ["posture:default", "posture:usw2", "posture:pdx"]
+        },
+        {
+            "src": ["autogroup:member"],
+            "dst": ["10.0.0.0/16"],
+            "ip": ["*"],
+            "via": ["tag:eug"],
+            "srcPosture": ["posture:default", "posture:usw2", "posture:eug"]
+        },
+        // us-east-2 Steering
+        {
+            "src": ["autogroup:member"],
+            "dst": ["10.0.0.0/16"],
+            "ip": ["*"],
+            "via": ["tag:cle"],
+            "srcPosture": ["posture:default", "posture:use2", "posture:cle"]
+        },
+        {
+            "src": ["autogroup:member"],
+            "dst": ["10.0.0.0/16"],
+            "ip": ["*"],
+            "via": ["tag:cvg"],
+            "srcPosture": ["posture:default", "posture:use2", "posture:cvg"]
+        },
+    ],
+    "postures": {
+        "posture:default": ["custom:subnet_router NOT SET"],
+        "posture:usw2": ["custom:subnet_router == 'usw2'"],
+        "posture:pdx": ["custom:subnet_router == 'pdx'"],
+        "posture:eug": ["custom:subnet_router == 'eug'"],
+        "posture:use2": ["custom:subnet_router == 'use2'"],
+        "posture:cle": ["custom:subnet_router == 'cle'"],
+        "posture:cvg": ["custom:subnet_router == 'cvg'"],
+    },
+}

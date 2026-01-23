@@ -1,0 +1,14 @@
+{
+    "name": "device-posture-subnet-router-steering",
+    "main": "index.ts",
+    "devDependencies": {
+        "@types/node": "^18",
+        "typescript": "^5.0.0"
+    },
+    "dependencies": {
+        "@pulumi/awsx": "^3.1.0",
+        "@pulumi/pulumi": "^3.216.0",
+        "@pulumi/tailscale": "^0.23.0",
+        "@pulumi/tailscale_cloudinit_config": "file:sdks/tailscale_cloudinit_config"
+    }
+}
