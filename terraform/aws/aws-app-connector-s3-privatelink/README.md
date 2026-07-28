@@ -25,7 +25,11 @@ The **app connector** advertises the two addresses that path needs. The VPC reso
 
 ## Policy File Example
 
-Terraform creates the split DNS entry and the device key. The app connector definition is the one piece it cannot create, because the provider has no resource for it and it lives in the policy file. After applying, the `next_step_app_connector_policy` output prints this stanza with the real domain filled in.
+Two edits to your tailnet policy file, one before `terraform apply` and one after.
+
+### Before you apply
+
+Terraform requests a device key carrying these tags. If nothing owns them, the apply fails when it creates the key.
 
 ```json
 {
@@ -33,7 +37,17 @@ Terraform creates the split DNS entry and the device key. The app connector defi
         "tag:example-infra":        ["autogroup:admin"],
         "tag:example-appconnector": ["autogroup:admin"],
     },
+}
+```
 
+### After you apply
+
+Terraform creates the split DNS entry and the device key. The app connector definition is the one piece it cannot create, because the provider has no resource for it and it lives in the policy file. The bucket domain and the routes are not known until the apply finishes, so this edit comes second.
+
+Run `terraform output -raw next_step_app_connector_policy` to get this stanza with the real values filled in.
+
+```json
+{
     "nodeAttrs": [
         {
             // "target" must be "*". The "connectors" field scopes this to the
@@ -72,6 +86,8 @@ Follow the documentation to configure the Terraform providers:
 - [AWS](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
 
 ### Deploy
+
+Add the `tagOwners` entries above to your policy file first, then:
 
 ```shell
 terraform init
