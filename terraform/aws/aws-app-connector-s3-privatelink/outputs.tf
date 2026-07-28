@@ -26,7 +26,7 @@ output "s3_domain" {
 
 output "s3_object_url" {
   description = "Object URL. Returns 200 from a tailnet client using the connector, 403 from the public internet."
-  value       = "https://${aws_s3_bucket.main.bucket_regional_domain_name}/hello.txt"
+  value       = "https://${aws_s3_bucket.main.bucket_regional_domain_name}/${aws_s3_object.main.key}"
 }
 
 output "s3_vpc_endpoint_id" {
