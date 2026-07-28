@@ -25,7 +25,7 @@ The **app connector** advertises the two addresses that path needs. The VPC reso
 
 ## Policy File Example
 
-Replace the domain with the `s3_domain` output after applying.
+Terraform creates the split DNS entry and the device key. The app connector definition is the one piece it cannot create, because the provider has no resource for it and it lives in the policy file. After applying, the `next_step_app_connector_policy` output prints this stanza with the real domain filled in.
 
 ```json
 {
@@ -61,7 +61,7 @@ Replace the domain with the `s3_domain` output after applying.
 
 ## Considerations
 
-- The bucket domain is not known until after `terraform apply`, so the app connector definition cannot be written first. Apply, then add the `s3_domain` output to your policy file.
+- The app connector definition has to be added to your policy file by hand. The Tailscale provider has no app connector resource, and the only way to write `nodeAttrs` from Terraform is `tailscale_acl`, which replaces the entire policy file. The `next_step_app_connector_policy` output prints exactly what to add. The connector advertises no routes until you do.
 - Any advertised routes must still be approved in the Tailscale Admin Console. The policy above uses [Auto Approvers for routes](https://tailscale.com/kb/1018/acls/#auto-approvers-for-routes-and-exit-nodes) instead. Narrow the prefix if `0.0.0.0/0` is broader than you want.
 - Only [virtual-hosted-style](https://docs.aws.amazon.com/AmazonS3/latest/userguide/VirtualHosting.html) requests take the private path. A path-style request uses the shared regional hostname, does not match the split DNS entry, and goes out publicly.
 - The endpoint policy allows `s3:*` on this one bucket rather than just `s3:GetObject`. A client routing the bucket through the endpoint sends its control-plane calls the same way, and a read-only endpoint policy makes tooling such as the AWS CLI fail against the bucket.
@@ -82,7 +82,13 @@ terraform init
 terraform apply
 ```
 
-Add the `s3_domain` output to your policy file, then check the path from a tailnet client:
+Add the app connector to your policy file:
+
+```shell
+terraform output -raw next_step_app_connector_policy
+```
+
+Then check the path from a tailnet client:
 
 ```shell
 # Resolves to the endpoint ENI, a private address.
