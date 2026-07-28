@@ -40,18 +40,14 @@ output "next_step_app_connector_policy" {
                     "name":       "${local.name}",
                     "connectors": ["tag:example-appconnector"],
                     "domains":    ["${aws_s3_bucket.main.bucket_regional_domain_name}"],
+                    "routes":     ${jsonencode(local.s3_advertised_routes)},
                 },
             ],
         },
     },
 
-    Then approve the connector's routes, or add this to "autoApprovers":
-
-    "routes": {
-        "0.0.0.0/0": ["tag:example-appconnector"],
-    },
-
-    Advertised routes: ${join(", ", local.s3_advertised_routes)}
+    Routes declared here are implicitly approved, so no autoApprovers entry is
+    needed and nothing has to be approved in the admin console.
   EOT
 }
 

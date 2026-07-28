@@ -34,12 +34,6 @@ Terraform creates the split DNS entry and the device key. The app connector defi
         "tag:example-appconnector": ["autogroup:admin"],
     },
 
-    "autoApprovers": {
-        "routes": {
-            "0.0.0.0/0": ["tag:example-appconnector"],
-        },
-    },
-
     "nodeAttrs": [
         {
             // "target" must be "*". The "connectors" field scopes this to the
@@ -51,6 +45,8 @@ Terraform creates the split DNS entry and the device key. The app connector defi
                         "name":       "example-s3",
                         "connectors": ["tag:example-appconnector"],
                         "domains":    ["example-bucket.s3.us-west-2.amazonaws.com"],
+                        // Routes declared here are implicitly approved.
+                        "routes":     ["10.0.80.2/32", "10.0.80.47/32"],
                     },
                 ],
             },
@@ -62,7 +58,7 @@ Terraform creates the split DNS entry and the device key. The app connector defi
 ## Considerations
 
 - The app connector definition has to be added to your policy file by hand. The Tailscale provider has no app connector resource, and the only way to write `nodeAttrs` from Terraform is `tailscale_acl`, which replaces the entire policy file. The `next_step_app_connector_policy` output prints exactly what to add. The connector advertises no routes until you do.
-- Any advertised routes must still be approved in the Tailscale Admin Console. The policy above uses [Auto Approvers for routes](https://tailscale.com/kb/1018/acls/#auto-approvers-for-routes-and-exit-nodes) instead. Narrow the prefix if `0.0.0.0/0` is broader than you want.
+- The routes are declared in the `routes` field of the app connector definition rather than passed to `--advertise-routes`. Routes declared there are implicitly approved, so nothing needs approving in the admin console and no [Auto Approvers](https://tailscale.com/kb/1018/acls/#auto-approvers-for-routes-and-exit-nodes) entry is required.
 - Only [virtual-hosted-style](https://docs.aws.amazon.com/AmazonS3/latest/userguide/VirtualHosting.html) requests take the private path. A path-style request uses the shared regional hostname, does not match the split DNS entry, and goes out publicly.
 - The endpoint policy allows `s3:*` on this one bucket rather than just `s3:GetObject`. A client routing the bucket through the endpoint sends its control-plane calls the same way, and a read-only endpoint policy makes tooling such as the AWS CLI fail against the bucket.
 - The connector must be in the same VPC as the endpoint. The ENI and the VPC resolver are only reachable from inside the VPC.

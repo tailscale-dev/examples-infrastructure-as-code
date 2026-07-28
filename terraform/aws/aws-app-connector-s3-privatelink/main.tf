@@ -17,12 +17,13 @@ locals {
     "--auto-update",
     "--ssh",
     "--advertise-connector",
-    "--advertise-routes=${join(",", local.s3_advertised_routes)}",
   ]
 
   # The VPC resolver knows the interface endpoint's private DNS mapping, and the
   # endpoint ENI carries the object bytes. Both are stable, unlike the public S3
-  # addresses an app connector would otherwise discover and advertise.
+  # addresses an app connector would otherwise discover and advertise. These go in
+  # the "routes" field of the app connector definition in the policy file, where
+  # they are implicitly approved. See the next_step_app_connector_policy output.
   vpc_resolver_ip = cidrhost(local.vpc_cidr_block, 2)
   s3_advertised_routes = concat(
     ["${local.vpc_resolver_ip}/32"],
