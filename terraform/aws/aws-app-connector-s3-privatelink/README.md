@@ -44,7 +44,7 @@ Terraform requests a device key carrying these tags. If nothing owns them, the a
 
 Terraform creates the split DNS entry and the device key. The app connector definition is the one piece it cannot create, because the provider has no resource for it and it lives in the policy file. The bucket domain and the routes are not known until the apply finishes, so this edit comes second.
 
-Run `terraform output -raw next_step_app_connector_policy` to get this stanza with the real values filled in.
+Fill in `domains` from the `s3_domain` output and `routes` from the `s3_advertised_routes` output.
 
 ```json
 {
@@ -71,7 +71,7 @@ Run `terraform output -raw next_step_app_connector_policy` to get this stanza wi
 
 ## Considerations
 
-- The app connector definition has to be added to your policy file by hand. The Tailscale provider has no app connector resource, and the only way to write `nodeAttrs` from Terraform is `tailscale_acl`, which replaces the entire policy file. The `next_step_app_connector_policy` output prints exactly what to add. The connector advertises no routes until you do.
+- The app connector definition has to be added to your policy file by hand. The Tailscale provider has no app connector resource, and the only way to write `nodeAttrs` from Terraform is `tailscale_acl`, which replaces the entire policy file. The connector advertises no routes until you add it.
 - The routes are declared in the `routes` field of the app connector definition rather than passed to `--advertise-routes`. Routes declared there are implicitly approved, so nothing needs approving in the admin console and no [Auto Approvers](https://tailscale.com/kb/1018/acls/#auto-approvers-for-routes-and-exit-nodes) entry is required.
 - Only [virtual-hosted-style](https://docs.aws.amazon.com/AmazonS3/latest/userguide/VirtualHosting.html) requests take the private path. A path-style request uses the shared regional hostname, does not match the split DNS entry, and goes out publicly.
 - The endpoint policy allows `s3:*` on this one bucket rather than just `s3:GetObject`. A client routing the bucket through the endpoint sends its control-plane calls the same way, and a read-only endpoint policy makes tooling such as the AWS CLI fail against the bucket.
@@ -94,10 +94,11 @@ terraform init
 terraform apply
 ```
 
-Add the app connector to your policy file:
+Add the app connector to your policy file, using these values:
 
 ```shell
-terraform output -raw next_step_app_connector_policy
+terraform output s3_domain
+terraform output s3_advertised_routes
 ```
 
 Then check the path from a tailnet client:

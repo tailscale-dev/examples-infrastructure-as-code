@@ -20,35 +20,8 @@ output "s3_bucket" {
 }
 
 output "s3_domain" {
-  description = "Bucket regional domain. Terraform already points the split DNS entry at this. Add it to the app connector in your policy file."
+  description = "Bucket regional domain. Terraform points the split DNS entry at this. Use it as the app connector domain in your policy file."
   value       = aws_s3_bucket.main.bucket_regional_domain_name
-}
-
-# The provider has no app connector resource, and the definition lives in the
-# policy file, so this one step is manual. Print the exact stanza to paste.
-output "next_step_app_connector_policy" {
-  description = "Add this to nodeAttrs in your policy file. The connector advertises no routes until you do."
-  value       = <<-EOT
-
-    Add this to "nodeAttrs" in your tailnet policy file:
-
-    {
-        "target": ["*"],
-        "app": {
-            "tailscale.com/app-connectors": [
-                {
-                    "name":       "${local.name}",
-                    "connectors": ["tag:example-appconnector"],
-                    "domains":    ["${aws_s3_bucket.main.bucket_regional_domain_name}"],
-                    "routes":     ${jsonencode(local.s3_advertised_routes)},
-                },
-            ],
-        },
-    },
-
-    Routes declared here are implicitly approved, so no autoApprovers entry is
-    needed and nothing has to be approved in the admin console.
-  EOT
 }
 
 output "s3_object_url" {
@@ -61,7 +34,7 @@ output "s3_vpc_endpoint_id" {
 }
 
 output "s3_advertised_routes" {
-  description = "Routes the connector advertises: the VPC resolver and the endpoint ENI"
+  description = "The VPC resolver and the endpoint ENI. Use these as the app connector routes in your policy file."
   value       = local.s3_advertised_routes
 }
 

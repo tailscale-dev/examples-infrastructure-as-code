@@ -23,14 +23,15 @@ locals {
   # endpoint ENI carries the object bytes. Both are stable, unlike the public S3
   # addresses an app connector would otherwise discover and advertise. These go in
   # the "routes" field of the app connector definition in the policy file, where
-  # they are implicitly approved. See the next_step_app_connector_policy output.
+  # they are implicitly approved. See the s3_advertised_routes output.
   vpc_resolver_ip = cidrhost(local.vpc_cidr_block, 2)
   s3_advertised_routes = concat(
     ["${local.vpc_resolver_ip}/32"],
     [for eni in data.aws_network_interface.s3_endpoint : "${eni.private_ip}/32"],
   )
 
-  # Modify these to use your own VPC.
+  # Modify these to use your own VPC. The VPC resolver address is derived from
+  # the CIDR, so vpc_cidr_block must match the VPC you point this at.
   vpc_id                        = module.vpc.vpc_id
   vpc_cidr_block                = "10.0.80.0/22"
   vpc_public_subnet_cidr_blocks = ["10.0.80.0/24"]
