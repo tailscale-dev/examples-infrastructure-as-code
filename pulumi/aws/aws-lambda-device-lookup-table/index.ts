@@ -1,12 +1,29 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as aws from "@pulumi/aws";
 import * as apigateway from "@pulumi/aws-apigateway";
+import * as tailscale from "@pulumi/tailscale";
 import * as path from "path";
 
 import * as handler from "./handler";
 
 const name = `example-${path.basename(process.cwd())}`;
-const pulumiConfig = new pulumi.Config();
+
+// Reuses the same "tailscale:" config namespace the ambient Tailscale
+// provider reads, so the OAuth client only needs to be configured once.
+const tailscaleConfig = new pulumi.Config("tailscale");
+
+const fn = new aws.lambda.CallbackFunction(`${name}-fn`, {
+    environment: {
+        variables: {
+            [handler.ENV_TAILSCALE_OAUTH_CLIENT_ID]: tailscaleConfig.require("oauthClientId"),
+            [handler.ENV_TAILSCALE_OAUTH_CLIENT_SECRET]: tailscaleConfig.requireSecret("oauthClientSecret"),
+        },
+    },
+    runtime: "nodejs20.x",
+    callback: async (ev: any, ctx) => {
+        return handler.lambdaHandler(ev);
+    },
+});
 
 const api = new apigateway.RestAPI(name, {
     stageName: `${name}`,
@@ -15,20 +32,17 @@ const api = new apigateway.RestAPI(name, {
         {
             path: "/",
             method: "POST",
-            eventHandler: new aws.lambda.CallbackFunction(`${name}-fn`, {
-                environment: {
-                    variables: {
-                        [handler.ENV_TAILSCALE_OAUTH_CLIENT_ID]: pulumiConfig.require("tailscaleOauthClientId"),
-                        [handler.ENV_TAILSCALE_OAUTH_CLIENT_SECRET]: pulumiConfig.requireSecret("tailscaleOauthClientSecret"),
-                    },
-                },
-                runtime: "nodejs20.x",
-                callback: async (ev: any, ctx) => {
-                    return handler.lambdaHandler(ev);
-                },
-            }),
+            eventHandler: fn,
         },
     ],
 });
 
 export const url = api.url;
+export const lambdaFunctionName = fn.name;
+
+const webhook = new tailscale.Webhook(`${name}-webhook`, {
+    endpointUrl: api.url,
+    subscriptions: ["nodeCreated"],
+});
+
+export const webhookSecret = pulumi.secret(webhook.secret);

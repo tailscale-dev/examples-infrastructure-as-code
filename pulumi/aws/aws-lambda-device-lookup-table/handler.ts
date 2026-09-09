@@ -83,7 +83,7 @@ async function nodeCreatedHandler(event: TailnetEvent): Promise<ProcessingResult
             throw new Error(`Failed to list tailnet devices, response status [${devicesResponse.status}]`);
         }
 
-        const deviceCSV = generateDeviceCSV(devicesResponse);
+        const deviceCSV = await generateDeviceCSV(devicesResponse);
         console.log(`Devices CSV:\n${deviceCSV}`); // TODO: persist to SIEM or Logging service
 
         return { event: event, result: "SUCCESS", } as ProcessingResult;

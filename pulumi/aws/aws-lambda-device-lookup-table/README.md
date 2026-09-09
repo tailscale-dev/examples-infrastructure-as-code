@@ -9,6 +9,8 @@ This example creates the following:
     Device ID, Device Name, Associated User or ACL Tags
     ```
 
+- a Tailscale [webhook](https://tailscale.com/kb/1213/webhooks) that sends `nodeCreated` events to the deployed Lambda's API Gateway URL
+
 ## To use
 
 ### Customize
@@ -20,6 +22,9 @@ In its current form the Lambda function prints the generated CSV to `console.log
 Follow the documentation to configure the Pulumi providers:
 
 - [AWS](https://www.pulumi.com/registry/packages/aws/installation-configuration/)
+- [Tailscale](https://www.pulumi.com/registry/packages/tailscale/installation-configuration/) — set credentials with `pulumi config set tailscale:oauthClientId ...` and `pulumi config set tailscale:oauthClientSecret ... --secret`, or with the `TAILSCALE_OAUTH_CLIENT_ID` / `TAILSCALE_OAUTH_CLIENT_SECRET` environment variables
+
+The same `tailscale:oauthClientId` / `tailscale:oauthClientSecret` values are also passed into the Lambda function as environment variables, so it can call the Tailscale API at runtime — one OAuth client, configured once.
 
 ### Deploy
 
@@ -27,10 +32,18 @@ Create a [Tailscale OAuth Client](https://tailscale.com/kb/1215/oauth-clients#se
 
 ```shell
 pulumi stack init
-pulumi config set tailscaleOauthClientId
-pulumi config set tailscaleOauthClientSecret --secret
+pulumi config set tailscale:oauthClientId
+pulumi config set tailscale:oauthClientSecret --secret
 pulumi up
 ```
+
+### Outputs
+
+| Output | Description |
+| --- | --- |
+| `url` | The API Gateway invoke URL. This is also the endpoint the Tailscale webhook is configured to call. |
+| `lambdaFunctionName` | The name of the deployed Lambda function, for finding it in the AWS console or `aws logs`. |
+| `webhookSecret` | The secret Tailscale generates when the webhook is created, for verifying the `Tailscale-Webhook-Signature` header as described in [Verifying an event signature](https://tailscale.com/kb/1213/webhooks#verifying-an-event-signature) (see the `TODO` in [`handler.ts`](./handler.ts)). This output is marked secret, so use `pulumi stack output webhookSecret --show-secrets` to view it. |
 
 ## To destroy
 
