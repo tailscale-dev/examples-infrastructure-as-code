@@ -26,7 +26,7 @@ Follow the documentation to configure the Pulumi providers:
 
 ### Deploy
 
-Create a [Tailscale OAuth Client](https://tailscale.com/kb/1215/oauth-clients#setting-up-an-oauth-client) with scope `all`. Set the client ID and client secret for the Lambda function with `pulumi config set ...`, and export the same values as environment variables for the Tailscale provider, as shown below.
+Create a [Tailscale OAuth Client](https://tailscale.com/kb/1215/oauth-clients#setting-up-an-oauth-client) with scope `all`. Set the client ID and client secret for the Lambda function with `pulumi config set ...` as shown below. Also export them as the `TAILSCALE_OAUTH_CLIENT_ID` / `TAILSCALE_OAUTH_CLIENT_SECRET` environment variables, for the Tailscale provider.
 
 ```shell
 pulumi stack init
