@@ -1,3 +1,5 @@
+**/.claude
+
 # Terraform-related files
 *.tfstate
 *.tfstate.*
