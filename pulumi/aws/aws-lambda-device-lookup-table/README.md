@@ -22,20 +22,20 @@ In its current form the Lambda function prints the generated CSV to `console.log
 Follow the documentation to configure the Pulumi providers:
 
 - [AWS](https://www.pulumi.com/registry/packages/aws/installation-configuration/)
-- [Tailscale](https://www.pulumi.com/registry/packages/tailscale/installation-configuration/) — set credentials with `pulumi config set tailscale:oauthClientId ...` and `pulumi config set tailscale:oauthClientSecret ... --secret`, or with the `TAILSCALE_OAUTH_CLIENT_ID` / `TAILSCALE_OAUTH_CLIENT_SECRET` environment variables
-
-The same `tailscale:oauthClientId` / `tailscale:oauthClientSecret` values are also passed into the Lambda function as environment variables, so it can call the Tailscale API at runtime — one OAuth client, configured once.
+- [Tailscale](https://www.pulumi.com/registry/packages/tailscale/installation-configuration/) — set the `TAILSCALE_OAUTH_CLIENT_ID` / `TAILSCALE_OAUTH_CLIENT_SECRET` environment variables before you run `pulumi up`. Pulumi uses these to authenticate the Tailscale provider that manages the webhook.
 
 ### Deploy
 
-Create a [Tailscale OAuth Client](https://tailscale.com/kb/1215/oauth-clients#setting-up-an-oauth-client) with scope `all` and provide the client ID and client secret with `pulumi config set ...` as shown below.
+Create a [Tailscale OAuth Client](https://tailscale.com/kb/1215/oauth-clients#setting-up-an-oauth-client) with scope `all`. Set the client ID and client secret for the Lambda function with `pulumi config set ...`, and export the same values as environment variables for the Tailscale provider, as shown below.
 
 ```shell
 pulumi stack init
-pulumi config set tailscale:oauthClientId
-pulumi config set tailscale:oauthClientSecret --secret
+pulumi config set tailscaleOauthClientId
+pulumi config set tailscaleOauthClientSecret --secret
 pulumi up
 ```
+
+`pulumi up` creates the Lambda function and API Gateway, then registers the Tailscale webhook that points at the API Gateway URL.
 
 ### Outputs
 

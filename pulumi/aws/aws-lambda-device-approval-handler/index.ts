@@ -8,31 +8,36 @@ import * as handler from "./handler";
 
 const name = `example-${path.basename(process.cwd())}`;
 const pulumiConfig = new pulumi.Config();
+const tailscaleOauthClientId = pulumiConfig.require("tailscaleOauthClientId");
+const tailscaleOauthClientSecret = pulumiConfig.requireSecret("tailscaleOauthClientSecret");
+
+const fn = new aws.lambda.CallbackFunction(`${name}-fn`, {
+    environment: {
+        variables: {
+            [handler.ENV_TAILSCALE_OAUTH_CLIENT_ID]: tailscaleOauthClientId,
+            [handler.ENV_TAILSCALE_OAUTH_CLIENT_SECRET]: tailscaleOauthClientSecret,
+        },
+    },
+    runtime: "nodejs20.x",
+    callback: async (ev: any, ctx) => {
+        return handler.lambdaHandler(ev);
+    },
+});
 
 const api = new apigateway.RestAPI(name, {
-    stageName: "tailscale-device-approval",
+    stageName: `${name}`,
     binaryMediaTypes: ["application/json"],
     routes: [
         {
             path: "/",
             method: "POST",
-            eventHandler: new aws.lambda.CallbackFunction(`${name}-fn`, {
-                environment: {
-                    variables: {
-                        [handler.ENV_TAILSCALE_OAUTH_CLIENT_ID]: pulumiConfig.require("tailscaleOauthClientId"),
-                        [handler.ENV_TAILSCALE_OAUTH_CLIENT_SECRET]: pulumiConfig.requireSecret("tailscaleOauthClientSecret"),
-                    },
-                },
-                runtime: "nodejs20.x",
-                callback: async (ev: any, ctx) => {
-                    return handler.lambdaHandler(ev);
-                },
-            }),
+            eventHandler: fn,
         },
     ],
 });
 
 export const url = api.url;
+export const lambdaFunctionName = fn.name;
 
 const webhook = new tailscale.Webhook(`${name}-webhook`, {
     endpointUrl: api.url,

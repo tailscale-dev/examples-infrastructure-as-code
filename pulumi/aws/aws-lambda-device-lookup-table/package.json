@@ -1,5 +1,5 @@
 {
-    "name": "tailscale-lambda-device-approval-handler",
+    "name": "tailscale-lambda-device-lookup-table",
     "main": "index.ts",
     "devDependencies": {
         "@types/node": "^18",

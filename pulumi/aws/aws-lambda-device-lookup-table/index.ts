@@ -7,16 +7,15 @@ import * as path from "path";
 import * as handler from "./handler";
 
 const name = `example-${path.basename(process.cwd())}`;
-
-// Reuses the same "tailscale:" config namespace the ambient Tailscale
-// provider reads, so the OAuth client only needs to be configured once.
-const tailscaleConfig = new pulumi.Config("tailscale");
+const pulumiConfig = new pulumi.Config();
+const tailscaleOauthClientId = pulumiConfig.require("tailscaleOauthClientId");
+const tailscaleOauthClientSecret = pulumiConfig.requireSecret("tailscaleOauthClientSecret");
 
 const fn = new aws.lambda.CallbackFunction(`${name}-fn`, {
     environment: {
         variables: {
-            [handler.ENV_TAILSCALE_OAUTH_CLIENT_ID]: tailscaleConfig.require("oauthClientId"),
-            [handler.ENV_TAILSCALE_OAUTH_CLIENT_SECRET]: tailscaleConfig.requireSecret("oauthClientSecret"),
+            [handler.ENV_TAILSCALE_OAUTH_CLIENT_ID]: tailscaleOauthClientId,
+            [handler.ENV_TAILSCALE_OAUTH_CLIENT_SECRET]: tailscaleOauthClientSecret,
         },
     },
     runtime: "nodejs20.x",
@@ -45,4 +44,5 @@ const webhook = new tailscale.Webhook(`${name}-webhook`, {
     subscriptions: ["nodeCreated"],
 });
 
+// Only set at creation. Store it if you plan to verify webhook signatures in the handler.
 export const webhookSecret = pulumi.secret(webhook.secret);
