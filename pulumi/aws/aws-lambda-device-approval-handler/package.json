@@ -9,6 +9,7 @@
         "@pulumi/aws": "^7.45.0",
         "@pulumi/aws-apigateway": "^3.0.0",
         "@pulumi/pulumi": "^3.137.0",
+        "@pulumi/tailscale": "^0.29.0",
         "@types/aws-lambda": "^8.10.140"
     }
 }

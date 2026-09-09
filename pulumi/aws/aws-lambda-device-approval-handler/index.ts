@@ -1,6 +1,7 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as aws from "@pulumi/aws";
 import * as apigateway from "@pulumi/aws-apigateway";
+import * as tailscale from "@pulumi/tailscale";
 import * as path from "path";
 
 import * as handler from "./handler";
@@ -32,3 +33,11 @@ const api = new apigateway.RestAPI(name, {
 });
 
 export const url = api.url;
+
+const webhook = new tailscale.Webhook(`${name}-webhook`, {
+    endpointUrl: api.url,
+    subscriptions: ["nodeNeedsApproval"],
+});
+
+// Only set at creation. Store it if you plan to verify webhook signatures in the handler.
+export const webhookSecret = pulumi.secret(webhook.secret);
