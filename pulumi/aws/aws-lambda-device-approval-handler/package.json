@@ -2,7 +2,7 @@
     "name": "tailscale-lambda-device-approval-handler",
     "main": "index.ts",
     "devDependencies": {
-        "@types/node": "^18",
+        "@types/node": "^24",
         "typescript": "^5.0.0"
     },
     "dependencies": {

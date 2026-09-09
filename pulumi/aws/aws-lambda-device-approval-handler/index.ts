@@ -18,7 +18,7 @@ const fn = new aws.lambda.CallbackFunction(`${name}-fn`, {
             [handler.ENV_TAILSCALE_OAUTH_CLIENT_SECRET]: tailscaleOauthClientSecret,
         },
     },
-    runtime: "nodejs20.x",
+    runtime: "nodejs24.x",
     callback: async (ev: any, ctx) => {
         return handler.lambdaHandler(ev);
     },
