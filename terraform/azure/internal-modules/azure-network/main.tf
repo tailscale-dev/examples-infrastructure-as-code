@@ -25,18 +25,18 @@ module "vpc" {
   address_space = local.cidrs
   subnets = {
     "public" = {
-      name             = var.subnet_name_public
+      name             = var.public_subnet_name
       address_prefixes = [local.subnet_cidrs[0]]
     }
     "private" = {
-      name             = var.subnet_name_private
+      name             = var.private_subnet_name
       address_prefixes = [local.subnet_cidrs[1]]
       nat_gateway = {
         id = azurerm_nat_gateway.nat.id
       }
     }
     "dns-inbound" = {
-      name             = var.subnet_name_private_dns_resolver
+      name             = var.private_dns_resolver_subnet_name
       address_prefixes = [local.subnet_cidrs[2]]
       delegations = [{
         name = "Microsoft.Network/dnsResolvers"
@@ -55,7 +55,7 @@ data "azurerm_subnet" "public" {
   resource_group_name = var.resource_group_name
 
   virtual_network_name = module.vpc.name
-  name                 = var.subnet_name_public
+  name                 = var.public_subnet_name
 
   depends_on = [module.vpc.vnet_subnets]
 }
@@ -64,7 +64,7 @@ data "azurerm_subnet" "private" {
   resource_group_name = var.resource_group_name
 
   virtual_network_name = module.vpc.name
-  name                 = var.subnet_name_private
+  name                 = var.private_subnet_name
 
   depends_on = [module.vpc.vnet_subnets]
 }
@@ -73,7 +73,7 @@ data "azurerm_subnet" "dns-inbound" {
   resource_group_name = var.resource_group_name
 
   virtual_network_name = module.vpc.name
-  name                 = var.subnet_name_private_dns_resolver
+  name                 = var.private_dns_resolver_subnet_name
 
   depends_on = [module.vpc.vnet_subnets]
 }

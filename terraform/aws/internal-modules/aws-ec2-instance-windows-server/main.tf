@@ -5,7 +5,7 @@ locals {
   windows_admin_password_ssm_parameter_name = "/${var.tailscale_hostname}/windows-admin-password"
 
   windows_install_script = templatefile(
-    "${path.module}/scripts/tailscale-windows.ps1.tftpl",
+    "${path.module}/scripts/tailscale-install.ps1.tftpl",
     {
       auth_key_ssm_parameter_name = local.tailscale_auth_key_ssm_parameter_name,
       tailscale_hostname          = var.tailscale_hostname,
