@@ -1,0 +1,83 @@
+<powershell>
+#
+# Installs Tailscale, authenticates the device, and verifies the connection.
+#
+Start-Transcript -Path "$env:SystemRoot\Temp\tailscale-user-data.log" -Append
+
+Write-Host "`n#`n# Beginning Tailscale installation...`n#`n"
+
+# Create temp directory if it doesn't exist
+$tempPath = "$env:TEMP"
+if (-not (Test-Path $tempPath)) {
+    New-Item -Path $tempPath -ItemType Directory -Force | Out-Null
+}
+$Installer = "$env:TEMP\tailscale.msi"
+
+# https://tailscale.com/docs/install/windows/msi
+$downloadTailscale = @{
+    Uri     = "${tailscale_msi_url}"
+    OutFile = $Installer
+}
+$downloadSuccess = $false
+for ($loop = 1; $loop -le 10; $loop++) {
+    Write-Host "Downloading Tailscale attempt: [$loop / 10]"
+    try {
+        Invoke-WebRequest @downloadTailscale
+        $downloadSuccess = $true
+        break
+    }
+    catch {
+        Write-Host "Download attempt $loop failed: $_"
+        Start-Sleep -Seconds 2
+    }
+}
+if (-not $downloadSuccess) {
+    Write-Host "Tailscale download failed. Exiting."
+    exit 1
+}
+Write-Host "Tailscale download successful."
+
+Write-Host "Installing $Installer"
+Start-Process msiexec.exe -ArgumentList "/i `"$Installer`"", "/qn", "/norestart" -Wait
+Write-Host "Install complete."
+
+Write-Host "Removing $Installer"
+Remove-Item $Installer -Force
+
+# Set the password for the local account below. schtasks needs the real,
+# current password for this account to create a task that runs at boot.
+Write-Host "Setting the password for local account [${username}]"
+net user "${username}" "${password}" /active:yes
+
+# Create a task to authenticate to the tailnet on boot, then run it now so
+# the device does not have to wait for a reboot to join the tailnet.
+Write-Host "`n#`n# Creating task to authenticate to tailnet on boot`n#`n"
+# /create = make a new task
+# /tn     = task name
+# /tr     = executable to run
+# /sc onstart = run on boot
+# /ru /rp = user and password to run the command as
+# /V1 /Z  = delete the task after it has run
+schtasks /create /tn "TailscaleUpOnce" /tr "'C:\Program Files\Tailscale\tailscale.exe' up --unattended --hostname '${tailscale_hostname}' --auth-key '${tailscale_auth_key}'" /sc onstart /ru "${username}" /rp "${password}" /V1 /Z
+schtasks /run /tn "TailscaleUpOnce"
+
+Write-Host "Waiting for Tailscale to authenticate..."
+$connected = $false
+for ($loop = 1; $loop -le 30; $loop++) {
+    & "C:\Program Files\Tailscale\tailscale.exe" status --peers=false *> $null
+    if ($LASTEXITCODE -eq 0) {
+        $connected = $true
+        break
+    }
+    Start-Sleep -Seconds 2
+}
+if ($connected) {
+    Write-Host "`n#`n# Tailscale status: connected`n#`n"
+} else {
+    Write-Host "`n#`n# Tailscale status: NOT connected`n#`n"
+}
+
+Write-Host "`n#`n# Complete.`n#`n"
+
+Stop-Transcript
+</powershell>
