@@ -6,14 +6,6 @@ output "vpc_id" {
   value = module.vpc.vnet_id
 }
 
-output "vpc_cidrs" {
-  value = module.vpc.vnet_address_space
-}
-
-output "nat_public_ips" {
-  value = module.vpc.nat_public_ips
-}
-
 output "public_subnet_id" {
   value = module.vpc.public_subnet_id
 }
@@ -35,10 +27,4 @@ output "instance_id" {
 output "ssh_private_key_openssh" {
   value     = var.admin_public_key_path == "" ? tls_private_key.ssh[0].private_key_openssh : null
   sensitive = true
-}
-
-output "user_data_md5" {
-  description = "MD5 hash of the VM user_data script - for detecting changes"
-  value       = module.tailscale_azure_linux_virtual_machine.user_data_md5
-  sensitive   = true
 }
