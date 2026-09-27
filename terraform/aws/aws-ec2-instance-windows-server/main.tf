@@ -15,6 +15,9 @@ locals {
   subnet_id          = module.vpc.public_subnets[0]
   security_group_ids = [aws_security_group.tailscale.id]
   instance_type      = "t3.medium"
+
+  # Use the provided auth key if set, otherwise use the one created below.
+  tailscale_auth_key = coalesce(var.tailscale_auth_key, try(tailscale_tailnet_key.main[0].key, null))
 }
 
 # Remove this to use your own VPC.
@@ -26,6 +29,8 @@ module "vpc" {
 }
 
 resource "tailscale_tailnet_key" "main" {
+  count = var.tailscale_auth_key == null ? 1 : 0
+
   ephemeral           = true
   preauthorized       = true
   reusable            = true
@@ -44,7 +49,7 @@ module "tailscale_aws_ec2_windows" {
 
   # Variables for Tailscale resources
   tailscale_hostname = local.name
-  tailscale_auth_key = tailscale_tailnet_key.main.key
+  tailscale_auth_key = local.tailscale_auth_key
 
   # Variables for the local Windows account used to run the Tailscale scheduled task
   windows_admin_password = var.windows_admin_password

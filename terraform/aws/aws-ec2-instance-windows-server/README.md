@@ -4,7 +4,7 @@ This example creates the following:
 
 - a VPC and related resources including a NAT Gateway
 - a Windows Server EC2 instance running Tailscale in a public subnet
-- a Tailnet device key to authenticate the Tailscale device
+- a Tailnet device key to authenticate the Tailscale device, unless you provide the `tailscale_auth_key` input variable
 
 ## Considerations
 

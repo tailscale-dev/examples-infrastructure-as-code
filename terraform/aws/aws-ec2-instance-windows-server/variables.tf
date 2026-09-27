@@ -3,3 +3,10 @@ variable "windows_admin_password" {
   type        = string
   sensitive   = true
 }
+
+variable "tailscale_auth_key" {
+  description = "Existing Tailscale auth key to authenticate the device. If not set, a new ephemeral, reusable auth key is created."
+  type        = string
+  default     = null
+  sensitive   = true
+}
