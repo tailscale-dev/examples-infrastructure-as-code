@@ -1,6 +1,6 @@
 locals {
   ubuntu_install_script = templatefile(
-    "${path.module}/scripts/tailscale-ubuntu.tftpl",
+    "${path.module}/scripts/tailscale-install.bash.tftpl",
     {
       tailscale_auth_key        = var.tailscale_auth_key,
       tailscale_arguments       = local.tailscale_arguments,

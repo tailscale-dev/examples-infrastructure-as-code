@@ -48,9 +48,9 @@ module "vpc" {
   resource_group_id   = local.resource_group_id
   resource_group_name = local.resource_group_name
 
-  subnet_name_public               = "public"
-  subnet_name_private              = "private"
-  subnet_name_private_dns_resolver = "dns-inbound"
+  public_subnet_name               = "public"
+  private_subnet_name              = "private"
+  private_dns_resolver_subnet_name = "dns-inbound"
 }
 
 resource "tls_private_key" "ssh" {

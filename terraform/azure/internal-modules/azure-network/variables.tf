@@ -35,15 +35,15 @@ variable "subnet_cidrs" {
   type        = list(string)
   default     = []
 }
-variable "subnet_name_public" {
+variable "public_subnet_name" {
   description = "Name of the `public` subnet"
   type        = string
 }
-variable "subnet_name_private" {
+variable "private_subnet_name" {
   description = "Name of the `private` subnet"
   type        = string
 }
-variable "subnet_name_private_dns_resolver" {
+variable "private_dns_resolver_subnet_name" {
   description = "Name of the `dns resolver` subnet"
   type        = string
 }

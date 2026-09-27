@@ -11,7 +11,7 @@ locals {
   ) == 0
 
   advertise_routes_script = local.routes_to_advertise ? "" : templatefile(
-    "${path.module}/scripts/advertise-routes.tftpl",
+    "${path.module}/scripts/advertise-routes.bash.tftpl",
     {
       tailscale_advertise_routes                   = join(",", var.tailscale_advertise_routes),
       tailscale_advertise_routes_from_file_on_host = local.saas_routes_to_advertise ? "" : var.tailscale_advertise_routes_from_file_on_host

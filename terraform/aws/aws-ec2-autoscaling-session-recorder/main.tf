@@ -161,7 +161,7 @@ module "tailscale_aws_ec2_autoscaling" {
   #
   additional_after_scripts = [
     templatefile(
-      "${path.module}/scripts/tsrecorder_docker.tftpl",
+      "${path.module}/scripts/tsrecorder-docker.bash.tftpl",
       {
         tailscale_recorder_auth_key = tailscale_tailnet_key.recorder.key,
         aws_access_key              = aws_iam_access_key.recorder.id,
