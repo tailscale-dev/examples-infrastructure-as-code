@@ -1,12 +1,17 @@
 locals {
+  # Names of the SSM Parameter Store SecureString parameters the instance
+  # reads at boot. The caller must create parameters with these names.
+  tailscale_auth_key_ssm_parameter_name     = "/${var.tailscale_hostname}/tailscale-auth-key"
+  windows_admin_password_ssm_parameter_name = "/${var.tailscale_hostname}/windows-admin-password"
+
   windows_install_script = templatefile(
     "${path.module}/scripts/tailscale-windows.ps1.tftpl",
     {
-      tailscale_auth_key = var.tailscale_auth_key,
-      tailscale_hostname = var.tailscale_hostname,
-      tailscale_msi_url  = var.tailscale_msi_url,
-      username           = var.windows_admin_username,
-      password           = var.windows_admin_password,
+      auth_key_ssm_parameter_name = local.tailscale_auth_key_ssm_parameter_name,
+      tailscale_hostname          = var.tailscale_hostname,
+      tailscale_msi_url           = var.tailscale_msi_url,
+      username                    = var.windows_admin_username,
+      password_ssm_parameter_name = local.windows_admin_password_ssm_parameter_name,
     }
   )
 }

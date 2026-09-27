@@ -44,22 +44,65 @@ Write-Host "Install complete."
 Write-Host "Removing $Installer"
 Remove-Item $Installer -Force
 
+# Get the password for the local account below, and the Tailscale auth key,
+# from SSM Parameter Store. Keeping these values out of userdata means they
+# do not appear in the output of the EC2 DescribeInstanceAttribute API.
+function Get-SecureParameter {
+    param([string]$Name)
+    try {
+        $value = (Get-SSMParameter -Name $Name -WithDecryption $true).Value
+        Write-Host "Successfully retrieved parameter [$Name]."
+        return $value
+    }
+    catch {
+        Write-Host "Failed to retrieve parameter [$Name]: $_. Exiting."
+        exit 1
+    }
+}
+
+Write-Host "Getting the password for local account [${username}] from SSM Parameter Store"
+$password = Get-SecureParameter -Name "${password_ssm_parameter_name}"
+if ([string]::IsNullOrEmpty($password)) {
+    Write-Host "Parameter [${password_ssm_parameter_name}] is empty. Exiting."
+    exit 1
+}
+
+Write-Host "Getting the Tailscale auth key from SSM Parameter Store"
+$authKey = Get-SecureParameter -Name "${auth_key_ssm_parameter_name}"
+if ([string]::IsNullOrEmpty($authKey)) {
+    Write-Host "Parameter [${auth_key_ssm_parameter_name}] is empty. Exiting."
+    exit 1
+}
+
 # Set the password for the local account below. schtasks needs the real,
 # current password for this account to create a task that runs at boot.
 Write-Host "Setting the password for local account [${username}]"
-net user "${username}" "${password}" /active:yes
+net user "${username}" "$password" /active:yes
+Write-Host "net user exit code: $LASTEXITCODE"
 
 # Create a task to authenticate to the tailnet on boot, then run it now so
 # the device does not have to wait for a reboot to join the tailnet.
+#
+# schtasks does not capture the output of the program it runs, so the task
+# runs a wrapper script that redirects tailscale's own output to a log file.
+# That log is the best source of the actual failure reason from tailscale.
 Write-Host "`n#`n# Creating task to authenticate to tailnet on boot`n#`n"
+$taskLogPath = "$env:SystemRoot\Temp\tailscale-up-task.log"
+$taskScriptPath = "$env:SystemRoot\Temp\tailscale-up-task.cmd"
+$taskScriptContent = "@echo off`r`n`"C:\Program Files\Tailscale\tailscale.exe`" up --unattended --hostname `"${tailscale_hostname}`" --auth-key `"$authKey`" > `"$taskLogPath`" 2>&1`r`n"
+Set-Content -Path $taskScriptPath -Value $taskScriptContent -Encoding ASCII
+
 # /create = make a new task
 # /tn     = task name
 # /tr     = executable to run
 # /sc onstart = run on boot
 # /ru /rp = user and password to run the command as
 # /V1 /Z  = delete the task after it has run
-schtasks /create /tn "TailscaleUpOnce" /tr "'C:\Program Files\Tailscale\tailscale.exe' up --unattended --hostname '${tailscale_hostname}' --auth-key '${tailscale_auth_key}'" /sc onstart /ru "${username}" /rp "${password}" /V1 /Z
+schtasks /create /tn "TailscaleUpOnce" /tr "$taskScriptPath" /sc onstart /ru "${username}" /rp "$password" /V1 /Z
+Write-Host "schtasks /create exit code: $LASTEXITCODE"
+
 schtasks /run /tn "TailscaleUpOnce"
+Write-Host "schtasks /run exit code: $LASTEXITCODE"
 
 Write-Host "Waiting for Tailscale to authenticate..."
 $connected = $false
@@ -71,10 +114,25 @@ for ($loop = 1; $loop -le 30; $loop++) {
     }
     Start-Sleep -Seconds 2
 }
+
+Write-Host "`n#`n# TailscaleUpOnce task output ($taskLogPath):`n#`n"
+if (Test-Path $taskLogPath) {
+    Get-Content $taskLogPath | ForEach-Object { Write-Host $_ }
+} else {
+    Write-Host "Task log not found. The task may not have run yet."
+}
+
+# Remove the wrapper script now that it has run. It briefly held the auth
+# key in plain text, and it is not needed again: this task only ever runs
+# once (see /Z above).
+Remove-Item $taskScriptPath -Force -ErrorAction SilentlyContinue
+
 if ($connected) {
     Write-Host "`n#`n# Tailscale status: connected`n#`n"
 } else {
     Write-Host "`n#`n# Tailscale status: NOT connected`n#`n"
+    Write-Host "`n#`n# Full tailscale status output:`n#`n"
+    & "C:\Program Files\Tailscale\tailscale.exe" status
 }
 
 Write-Host "`n#`n# Complete.`n#`n"
