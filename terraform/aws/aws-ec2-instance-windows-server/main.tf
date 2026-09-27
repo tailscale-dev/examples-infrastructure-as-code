@@ -18,6 +18,9 @@ locals {
 
   # Use the provided auth key if set, otherwise use the one created below.
   tailscale_auth_key = coalesce(var.tailscale_auth_key, try(tailscale_tailnet_key.main[0].key, null))
+
+  windows_admin_password_ssm_parameter_name = "/${local.name}/windows-admin-password"
+  tailscale_auth_key_ssm_parameter_name     = "/${local.name}/tailscale-auth-key"
 }
 
 # Remove this to use your own VPC.
@@ -38,6 +41,67 @@ resource "tailscale_tailnet_key" "main" {
   tags                = local.tailscale_acl_tags
 }
 
+# The default AWS-managed KMS key used to encrypt SecureString parameters.
+data "aws_kms_alias" "ssm" {
+  name = "alias/aws/ssm"
+}
+
+resource "aws_ssm_parameter" "windows_admin_password" {
+  name  = local.windows_admin_password_ssm_parameter_name
+  type  = "SecureString"
+  value = var.windows_admin_password
+}
+
+resource "aws_ssm_parameter" "tailscale_auth_key" {
+  name  = local.tailscale_auth_key_ssm_parameter_name
+  type  = "SecureString"
+  value = local.tailscale_auth_key
+}
+
+resource "aws_iam_role" "windows_instance" {
+  name = local.name
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect    = "Allow"
+        Action    = "sts:AssumeRole"
+        Principal = { Service = "ec2.amazonaws.com" }
+      },
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "windows_instance_ssm" {
+  name = "read-windows-admin-password"
+  role = aws_iam_role.windows_instance.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = "ssm:GetParameter"
+        Resource = [
+          aws_ssm_parameter.windows_admin_password.arn,
+          aws_ssm_parameter.tailscale_auth_key.arn,
+        ]
+      },
+      {
+        Effect   = "Allow"
+        Action   = "kms:Decrypt"
+        Resource = data.aws_kms_alias.ssm.target_key_arn
+      },
+    ]
+  })
+}
+
+resource "aws_iam_instance_profile" "windows_instance" {
+  name = local.name
+  role = aws_iam_role.windows_instance.name
+}
+
 module "tailscale_aws_ec2_windows" {
   source = "../internal-modules/aws-ec2-instance-windows-server"
 
@@ -47,14 +111,15 @@ module "tailscale_aws_ec2_windows" {
   subnet_id              = local.subnet_id
   vpc_security_group_ids = local.security_group_ids
 
+  instance_profile_name = aws_iam_instance_profile.windows_instance.name
+
   # Variables for Tailscale resources
   tailscale_hostname = local.name
-  tailscale_auth_key = local.tailscale_auth_key
-
-  # Variables for the local Windows account used to run the Tailscale scheduled task
-  windows_admin_password = var.windows_admin_password
 
   depends_on = [
+    aws_ssm_parameter.tailscale_auth_key,
+    aws_ssm_parameter.windows_admin_password,
+    aws_iam_role_policy.windows_instance_ssm,
     module.vpc.nat_ids, # remove if using your own VPC otherwise ensure provisioned NAT gateway is available
   ]
 }
